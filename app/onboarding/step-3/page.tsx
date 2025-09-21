@@ -8,6 +8,7 @@ import Link from "next/link";
 
 export default function OnboardingStep3() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<{ username: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [githubUrl, setGithubUrl] = useState("");
@@ -32,21 +33,22 @@ export default function OnboardingStep3() {
         .from('profiles')
         .select('username, github_url, linkedin_url, portfolio_url')
         .eq('id', user.id);
-
-      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+      const profileData = profiles && profiles.length > 0 ? profiles[0] : null;
       
-      if (!profile?.username) {
+      if (!profileData?.username) {
         // User hasn't completed Step 1, redirect back
         router.push("/onboarding/step-1");
         return;
       }
 
       // Pre-fill existing data if available
-      if (profile.github_url) setGithubUrl(profile.github_url);
-      if (profile.linkedin_url) setLinkedinUrl(profile.linkedin_url);
-      if (profile.portfolio_url) setPortfolioUrl(profile.portfolio_url);
+      if (profileData.github_url) setGithubUrl(profileData.github_url);
+      if (profileData.linkedin_url) setLinkedinUrl(profileData.linkedin_url);
+      if (profileData.portfolio_url) setPortfolioUrl(profileData.portfolio_url);
 
       setUser(user);
+      setProfile({ username: profileData.username });
+      setLoading(false);
       setLoading(false);
     };
 
@@ -118,7 +120,7 @@ export default function OnboardingStep3() {
       }
 
       // Success - redirect to profile page
-      router.push(`/profile/${profile.username}`);
+      router.push(`/profile/${profile!.username}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -147,7 +149,7 @@ export default function OnboardingStep3() {
       }
 
       // Skip to profile page
-      router.push(`/profile/${profile.username}`);
+      router.push(`/profile/${profile!.username}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

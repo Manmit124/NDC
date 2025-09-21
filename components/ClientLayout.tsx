@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Profile {
   username: string;
@@ -101,37 +102,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     loadUserData();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          
-          // Get user profile
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('username, full_name, avatar_url')
-            .eq('id', session.user.id);
-
-          if (profiles && profiles.length > 0) {
-            setProfile(profiles[0]);
-          }
-        } else {
-          setUser(null);
-          setProfile(null);
-          
-          // If user logged out and on dashboard route, redirect to login
-          if (isDashboardRoute) {
-            router.push('/login');
-            return;
-          }
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [supabase, isDashboardRoute, router]);
 
   const handleSignOut = async () => {
@@ -214,9 +184,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                 {profile?.avatar_url ? (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={profile.full_name}
+                    width={40}
+                    height={40}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (

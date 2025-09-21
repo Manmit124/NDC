@@ -126,7 +126,7 @@ export default function HomePage() {
                 Nagpur Developer Club
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto text-balance">
-                Connect with Nagpur's thriving software developer community. Build your profile, find opportunities, get help, and grow your career in the heart of Maharashtra's tech scene.
+                Connect with Nagpur&apos;s thriving software developer community. Build your profile, find opportunities, get help, and grow your career in the heart of Maharashtra&apos;s tech scene.
               </p>
             </div>
             
@@ -155,7 +155,7 @@ export default function HomePage() {
                 Why Join NDC?
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Discover the benefits of being part of Nagpur's premier developer community
+                Discover the benefits of being part of Nagpur&apos;s premier developer community
               </p>
             </div>
             
@@ -180,7 +180,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-semibold text-foreground">Job & Internship Board</h3>
                 <p className="text-muted-foreground">
-                  Discover exciting career opportunities in Nagpur's growing tech ecosystem. From startups to established companies.
+                  Discover exciting career opportunities in Nagpur&apos;s growing tech ecosystem. From startups to established companies.
                 </p>
               </div>
               
@@ -246,7 +246,7 @@ export default function HomePage() {
               Welcome to NDC Dashboard
             </h1>
             <p className="text-muted-foreground">
-              Your gateway to Nagpur's developer community
+              Your gateway to Nagpur&apos;s developer community
             </p>
           </div>
 

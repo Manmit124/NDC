@@ -98,7 +98,7 @@ export default function SignupPage() {
                 Join NDC Community
               </h1>
               <p className="text-muted-foreground">
-                Connect with Nagpur's developer community and unlock opportunities
+                Connect with Nagpur&apos;s developer community and unlock opportunities
               </p>
             </div>
           </div>

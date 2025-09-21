@@ -135,8 +135,20 @@ export default function OnboardingStep2() {
         throw error;
       }
 
+      // Fetch profile to get username
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user!.id);
+
+      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+
       // Skip to profile page
-      router.push(`/profile/${profile.username}`);
+      if (profile?.username) {
+        router.push(`/profile/${profile.username}`);
+      } else {
+        router.push("/profile");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
