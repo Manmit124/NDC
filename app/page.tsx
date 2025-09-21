@@ -14,6 +14,23 @@ export default function HomePage() {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Check if user has completed onboarding (has a profile with username)
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id);
+
+        const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+        
+        if (!profile?.username) {
+          // User needs to complete onboarding
+          router.push("/onboarding");
+          return;
+        }
+      }
+      
       setUser(user);
       setLoading(false);
     };
@@ -22,7 +39,25 @@ export default function HomePage() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user || null);
+        const user = session?.user || null;
+        
+        if (user) {
+          // Check if user has completed onboarding
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id);
+
+          const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+          
+          if (!profile?.username) {
+            // User needs to complete onboarding
+            router.push("/onboarding");
+            return;
+          }
+        }
+        
+        setUser(user);
         setLoading(false);
       }
     );
@@ -30,7 +65,7 @@ export default function HomePage() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, router]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
