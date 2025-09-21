@@ -28,6 +28,10 @@ export default function HomePage() {
           // User needs to complete onboarding
           router.push("/onboarding");
           return;
+        } else {
+          // User has profile, redirect to dashboard
+          router.push("/dashboard");
+          return;
         }
       }
       
@@ -53,6 +57,10 @@ export default function HomePage() {
           if (!profile?.username) {
             // User needs to complete onboarding
             router.push("/onboarding");
+            return;
+          } else {
+            // User has profile, redirect to dashboard
+            router.push("/dashboard");
             return;
           }
         }

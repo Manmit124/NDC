@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -21,14 +21,13 @@ interface Profile {
 }
 
 export default function ProfilePage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [, setCurrentUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   
-  const router = useRouter();
   const params = useParams();
   const username = params.username as string;
   const supabase = createClient();
@@ -59,7 +58,7 @@ export default function ProfilePage() {
         setIsOwnProfile(user?.id === profileData.id);
         
         setLoading(false);
-      } catch (err) {
+      } catch {
         setError("Failed to load profile");
         setLoading(false);
       }
@@ -70,87 +69,53 @@ export default function ProfilePage() {
     }
   }, [username, supabase]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-background flex items-center justify-center">
+  //       <div className="text-center space-y-4">
+  //         <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto"></div>
+  //         <p className="text-muted-foreground">Loading profile...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        {/* Header */}
-        <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link href="/" className="text-xl font-semibold text-foreground hover:text-muted-foreground transition-colors">
-                  NDC - Nagpur Developer Club
-                </Link>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Error Content */}
-        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4">
-            <div className="text-6xl mb-4">😕</div>
-            <h1 className="text-3xl font-semibold text-foreground">Profile Not Found</h1>
-            <p className="text-muted-foreground">
-              The profile you&apos;re looking for doesn&apos;t exist.
-            </p>
-            <Link
-              href="/"
-              className="inline-block bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-medium transition-colors"
-            >
-              Go Home
-            </Link>
-          </div>
-        </main>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center space-y-4">
+          <div className="text-6xl mb-4">😕</div>
+          <h1 className="text-3xl font-semibold text-foreground">Profile Not Found</h1>
+          <p className="text-muted-foreground">
+            The profile you&apos;re looking for doesn&apos;t exist.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-block bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-medium transition-colors"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-xl font-semibold text-foreground hover:text-muted-foreground transition-colors">
-                NDC - Nagpur Developer Club
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              {currentUser && (
-                <>
-                  <span className="text-sm text-muted-foreground">
-                    {currentUser.email}
-                  </span>
-                  {isOwnProfile && (
-                    <button
-                      onClick={() => setEditing(!editing)}
-                      className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      {editing ? "Cancel" : "Edit Profile"}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+    <div className="p-6">
+      {/* Edit Button for Own Profile */}
+      {isOwnProfile && (
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={() => setEditing(!editing)}
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            {editing ? "Cancel" : "Edit Profile"}
+          </button>
         </div>
-      </header>
+      )}
 
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto">
         <div className="space-y-8">
           {/* Profile Header */}
           <div className="text-center space-y-6">
@@ -160,6 +125,8 @@ export default function ProfilePage() {
                 <Image
                   src={profile.avatar_url}
                   alt={profile.full_name}
+                  width={128}
+                  height={128}
                   className="w-32 h-32 rounded-full object-cover"
                 />
               ) : (
@@ -278,7 +245,7 @@ export default function ProfilePage() {
             })}
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Edit Modal/Overlay */}
       {editing && isOwnProfile && (
@@ -294,10 +261,9 @@ export default function ProfilePage() {
               </button>
             </div>
             
-            {/* Edit Form Component will go here */}
             <EditProfileForm 
               profile={profile} 
-              onSave={(updatedProfile) => {
+              onSave={(updatedProfile: Profile) => {
                 setProfile(updatedProfile);
                 setEditing(false);
               }}
