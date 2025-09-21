@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Developer {
   username: string;
@@ -191,9 +192,11 @@ export default function SearchPage() {
                   <div className="flex items-center space-x-4 mb-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                       {developer.avatar_url ? (
-                        <img
+                        <Image
                           src={developer.avatar_url}
                           alt={developer.full_name}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (

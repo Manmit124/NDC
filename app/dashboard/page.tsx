@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-// import { User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
 interface Profile {
@@ -20,7 +20,6 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState< any | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     totalDevelopers: 0,
@@ -35,7 +34,6 @@ export default function DashboardPage() {
     const loadDashboardData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
 
         if (user) {
           // Get user profile
@@ -68,7 +66,7 @@ export default function DashboardPage() {
     };
 
     loadDashboardData();
-  }, []);
+  }, [supabase]);
 
   if (loading) {
     return (
