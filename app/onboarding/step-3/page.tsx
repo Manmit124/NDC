@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
 export default function OnboardingStep3() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ username: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Use our auth hook instead of manual state management
+  const { user, profile, isLoading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [githubUrl, setGithubUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -20,40 +19,24 @@ export default function OnboardingStep3() {
   const supabase = createClient();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    if (!isLoading) {
       if (!user) {
         router.push("/login");
         return;
       }
 
-      // Check if user has a profile with username (Step 1 completed)
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('username, github_url, linkedin_url, portfolio_url')
-        .eq('id', user.id);
-      const profileData = profiles && profiles.length > 0 ? profiles[0] : null;
-      
-      if (!profileData?.username) {
+      if (!profile?.username) {
         // User hasn't completed Step 1, redirect back
         router.push("/onboarding/step-1");
         return;
       }
 
       // Pre-fill existing data if available
-      if (profileData.github_url) setGithubUrl(profileData.github_url);
-      if (profileData.linkedin_url) setLinkedinUrl(profileData.linkedin_url);
-      if (profileData.portfolio_url) setPortfolioUrl(profileData.portfolio_url);
-
-      setUser(user);
-      setProfile({ username: profileData.username });
-      setLoading(false);
-      setLoading(false);
-    };
-
-    checkUser();
-  }, [supabase, router]);
+      if (profile.github_url) setGithubUrl(profile.github_url);
+      if (profile.linkedin_url) setLinkedinUrl(profile.linkedin_url);
+      if (profile.portfolio_url) setPortfolioUrl(profile.portfolio_url);
+    }
+  }, [user, profile, isLoading, router]);
 
   const validateUrl = (url: string, platform: string): string | null => {
     if (!url) return null;
@@ -157,7 +140,7 @@ export default function OnboardingStep3() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

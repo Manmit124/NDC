@@ -2,54 +2,39 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/hooks/auth/useAuth";
 import Link from "next/link";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const router = useRouter();
-  const supabase = createClient();
+  
+  // Use our new auth hook instead of manual state management
+  const { signup, isSigningUp, signupError } = useAuth();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setSuccess("");
 
     // Validate passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      setLoading(false);
       return;
     }
 
     // Validate password length
     if (password.length < 6) {
       setError("Password must be at least 6 characters long");
-      setLoading(false);
       return;
     }
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          }
-        }
-      });
-
-      if (error) {
-        setError(error.message);
-      } else if (data.user) {
+    signup({ email, password }, {
+      onSuccess: (data) => {
         // Check if email confirmation is required
         if (!data.session) {
           setSuccess("Please check your email to confirm your account before signing in.");
@@ -58,11 +43,7 @@ export default function SignupPage() {
           router.push("/");
         }
       }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -106,24 +87,6 @@ export default function SignupPage() {
           {/* Signup Form */}
           <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
             <form className="space-y-6" onSubmit={handleSignup}>
-              {/* Name Field */}
-              <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium text-foreground">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-
               {/* Email Field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -186,19 +149,19 @@ export default function SignupPage() {
               )}
 
               {/* Error Message */}
-              {error && (
+              {(error || signupError) && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                  <p className="text-destructive text-sm">{error}</p>
+                  <p className="text-destructive text-sm">{error || signupError?.message}</p>
                 </div>
               )}
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isSigningUp}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
               >
-                {loading ? (
+                {isSigningUp ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
                     <span>Creating account...</span>

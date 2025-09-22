@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
 // Predefined skills categories
@@ -35,8 +35,6 @@ const skillsCategories = {
 };
 
 export default function OnboardingStep2() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [bio, setBio] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -44,24 +42,17 @@ export default function OnboardingStep2() {
   
   const router = useRouter();
   const supabase = createClient();
+  
+  // Use our auth hook instead of manual state management
+  const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    if (!isLoading) {
       if (!user) {
         router.push("/login");
         return;
       }
 
-      // Check if user has a profile with username (Step 1 completed)
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('username, bio, skills')
-        .eq('id', user.id);
-
-      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-      
       if (!profile?.username) {
         // User hasn't completed Step 1, redirect back
         router.push("/onboarding/step-1");
@@ -71,13 +62,8 @@ export default function OnboardingStep2() {
       // Pre-fill existing data if available
       if (profile.bio) setBio(profile.bio);
       if (profile.skills) setSelectedSkills(profile.skills);
-
-      setUser(user);
-      setLoading(false);
-    };
-
-    checkUser();
-  }, [supabase, router]);
+    }
+  }, [user, profile, isLoading, router]);
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev => 
@@ -156,7 +142,7 @@ export default function OnboardingStep2() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

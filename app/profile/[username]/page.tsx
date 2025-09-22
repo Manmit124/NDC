@@ -1,75 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useProfile, useUpdateProfile } from "@/hooks/api/useProfile";
 import Link from "next/link";
 import Image from "next/image";
-
-interface Profile {
-  id: string;
-  username: string;
-  full_name: string;
-  bio?: string;
-  skills?: string[];
-  github_url?: string;
-  linkedin_url?: string;
-  portfolio_url?: string;
-  avatar_url?: string;
-  updated_at: string;
-}
+import { Profile } from "@/types/database";
 
 export default function ProfilePage() {
-  const [, setCurrentUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [error, setError] = useState("");
   
   const params = useParams();
   const username = params.username as string;
-  const supabase = createClient();
+  
+  // Use our new hooks instead of manual state management
+  const { user } = useAuth();
+  const { data: profile, isLoading, error } = useProfile(username);
+  const updateProfile = useUpdateProfile();
+  
+  // Check if this is the current user's profile
+  const isOwnProfile = user?.id === profile?.id;
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(user);
-
-        // Get profile by username
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', username);
-
-        if (!profiles || profiles.length === 0) {
-          setError("Profile not found");
-          setLoading(false);
-          return;
-        }
-
-        const profileData = profiles[0];
-        setProfile(profileData);
-        
-        // Check if this is the current user's profile
-        setIsOwnProfile(user?.id === profileData.id);
-        
-        setLoading(false);
-      } catch {
-        setError("Failed to load profile");
-        setLoading(false);
-      }
-    };
-
-    if (username) {
-      loadProfile();
-    }
-  }, [username, supabase]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -263,10 +216,8 @@ export default function ProfilePage() {
             
             <EditProfileForm 
               profile={profile} 
-              onSave={(updatedProfile: Profile) => {
-                setProfile(updatedProfile);
-                setEditing(false);
-              }}
+              updateProfile={updateProfile}
+              onSave={() => setEditing(false)}
               onCancel={() => setEditing(false)}
             />
           </div>
@@ -279,11 +230,13 @@ export default function ProfilePage() {
 // Edit Profile Form Component
 function EditProfileForm({ 
   profile, 
+  updateProfile,
   onSave, 
   onCancel 
 }: { 
   profile: Profile;
-  onSave: (profile: Profile) => void;
+  updateProfile: ReturnType<typeof useUpdateProfile>;
+  onSave: () => void;
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
@@ -294,10 +247,7 @@ function EditProfileForm({
     portfolio_url: profile.portfolio_url || '',
   });
   const [selectedSkills, setSelectedSkills] = useState<string[]>(profile.skills || []);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  
-  const supabase = createClient();
 
   // Skills categories (same as onboarding)
   const skillsCategories = {
@@ -337,33 +287,28 @@ function EditProfileForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError("");
 
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          bio: formData.bio.trim() || null,
-          skills: selectedSkills.length > 0 ? selectedSkills : null,
-          github_url: formData.github_url.trim() || null,
-          linkedin_url: formData.linkedin_url.trim() || null,
-          portfolio_url: formData.portfolio_url.trim() || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.id)
-        .select()
-        .single();
+    const updates = {
+      full_name: formData.full_name,
+      bio: formData.bio.trim() || undefined,
+      skills: selectedSkills.length > 0 ? selectedSkills : undefined,
+      github_url: formData.github_url.trim() || undefined,
+      linkedin_url: formData.linkedin_url.trim() || undefined,
+      portfolio_url: formData.portfolio_url.trim() || undefined,
+    };
 
-      if (error) throw error;
-
-      onSave(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
+    updateProfile.mutate(
+      { profileId: profile.id, updates: updates as Partial<Profile> },
+      {
+        onSuccess: () => {
+          onSave();
+        },
+        onError: (err: Error) => {
+          setError(err.message || "Failed to update profile");
+        }
+      }
+    );
   };
 
   return (
@@ -479,21 +424,21 @@ function EditProfileForm({
 
       {/* Actions */}
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={saving}
-          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded-md font-medium transition-colors"
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={saving}
-          className="px-4 py-2 border border-input rounded-md text-foreground hover:bg-muted transition-colors"
-        >
-          Cancel
-        </button>
+              <button
+                type="submit"
+                disabled={updateProfile.isPending}
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded-md font-medium transition-colors"
+              >
+                {updateProfile.isPending ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={updateProfile.isPending}
+                className="px-4 py-2 border border-input rounded-md text-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
       </div>
     </form>
   );

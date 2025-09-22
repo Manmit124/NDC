@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
 export default function OnboardingStep1() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
@@ -18,40 +16,29 @@ export default function OnboardingStep1() {
   
   const router = useRouter();
   const supabase = createClient();
+  
+  // Use our auth hook instead of manual state management
+  const { user, profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    if (!isLoading) {
       if (!user) {
         router.push("/login");
         return;
       }
 
-      // Check if user already has a profile
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('username, full_name')
-        .eq('id', user.id);
-
-      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-      
       if (profile?.username) {
         // User already has a profile, redirect to dashboard
         router.push("/");
         return;
       }
 
-      setUser(user);
       // Pre-fill full name if available from auth metadata
       if (user.user_metadata?.name) {
         setFullName(user.user_metadata.name);
       }
-      setLoading(false);
-    };
-
-    checkUser();
-  }, [supabase, router]);
+    }
+  }, [user, profile, isLoading, router]);
 
   // Check username availability
   useEffect(() => {
@@ -153,7 +140,7 @@ export default function OnboardingStep1() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

@@ -2,38 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/hooks/auth/useAuth";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
-  const supabase = createClient();
+  
+  // Use our new auth hook instead of manual state management
+  const { login, isLoggingIn, loginError } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else if (data.user) {
+    login({ email, password }, {
+      onSuccess: () => {
         router.push("/");
       }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -114,19 +101,19 @@ export default function LoginPage() {
               </div>
 
               {/* Error Message */}
-              {error && (
+              {loginError && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                  <p className="text-destructive text-sm">{error}</p>
+                  <p className="text-destructive text-sm">{loginError.message}</p>
                 </div>
               )}
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoggingIn}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
               >
-                {loading ? (
+                {isLoggingIn ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
                     <span>Signing in...</span>

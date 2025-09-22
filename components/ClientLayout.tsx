@@ -1,31 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useUIStore } from "@/stores/ui";
 import Link from "next/link";
 import Image from "next/image";
-
-interface Profile {
-  username: string;
-  full_name: string;
-  avatar_url?: string;
-}
 
 interface ClientLayoutProps {
   children: React.ReactNode;
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Use our new hooks instead of manual state management
+  const { user, profile, isLoading, logout } = useAuth();
+  const { sidebarOpen, setSidebarOpen } = useUIStore();
   
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
 
   // Check if current route should show dashboard layout
   const isDashboardRoute = pathname.startsWith('/dashboard') || 
@@ -69,48 +61,19 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     }
   ];
 
+  // Redirect to login if not authenticated and on dashboard route
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          setUser(user);
+    if (!isLoading && !user && isDashboardRoute) {
+      router.push('/login');
+    }
+  }, [user, isLoading, isDashboardRoute, router]);
 
-          // Get user profile
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('username, full_name, avatar_url')
-            .eq('id', user.id);
-
-          if (profiles && profiles.length > 0) {
-            setProfile(profiles[0]);
-          }
-        } else if (isDashboardRoute) {
-          // If no user and on dashboard route, redirect to login
-          router.push('/login');
-          return;
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading user data:', error);
-        setLoading(false);
-      }
-    };
-
-    loadUserData();
-
-    // Listen for auth changes
-  }, [supabase, isDashboardRoute, router]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+  const handleSignOut = () => {
+    logout(); // Uses our auth hook's logout function
   };
 
   // Show loading state
-  if (loading && isDashboardRoute) {
+  if (isLoading && isDashboardRoute) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

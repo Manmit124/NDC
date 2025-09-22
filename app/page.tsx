@@ -1,86 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 export default function HomePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
+  
+  // Use our new auth hook instead of manual state management
+  const { user, profile, isLoading, logout } = useAuth();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        // Check if user has completed onboarding (has a profile with username)
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', user.id);
-
-        const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-        
-        if (!profile?.username) {
-          // User needs to complete onboarding
-          router.push("/onboarding");
-          return;
-        } else {
-          // User has profile, redirect to dashboard
-          router.push("/dashboard");
-          return;
-        }
+    if (!isLoading && user) {
+      if (!profile?.username) {
+        // User needs to complete onboarding
+        router.push("/onboarding");
+        return;
+      } else {
+        // User has profile, redirect to dashboard
+        router.push("/dashboard");
+        return;
       }
-      
-      setUser(user);
-      setLoading(false);
-    };
+    }
+  }, [user, profile, isLoading, router]);
 
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const user = session?.user || null;
-        
-        if (user) {
-          // Check if user has completed onboarding
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', user.id);
-
-          const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-          
-          if (!profile?.username) {
-            // User needs to complete onboarding
-            router.push("/onboarding");
-            return;
-          } else {
-            // User has profile, redirect to dashboard
-            router.push("/dashboard");
-            return;
-          }
-        }
-        
-        setUser(user);
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase, router]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+  const handleSignOut = () => {
+    logout(); // Uses our auth hook's logout function
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

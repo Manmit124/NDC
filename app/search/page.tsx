@@ -1,59 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { useSearchProfiles } from "@/hooks/api/useSearch";
+import { useUIStore } from "@/stores/ui";
 import Link from "next/link";
 import Image from "next/image";
-
-interface Developer {
-  username: string;
-  full_name: string;
-  bio?: string;
-  skills?: string[];
-  avatar_url?: string;
-}
+import { Profile } from "@/types/database";
 
 export default function SearchPage() {
-  const [developers, setDevelopers] = useState<Developer[]>([]);
-  const [filteredDevelopers, setFilteredDevelopers] = useState<Developer[]>([]);
+  const [filteredDevelopers, setFilteredDevelopers] = useState<Profile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkill, setSelectedSkill] = useState("");
-  const [loading, setLoading] = useState(true);
   
-  const supabase = createClient();
+  // Use our new hooks instead of manual state management
+  const { data: developers, isLoading } = useSearchProfiles();
+  const { searchQuery: globalSearchQuery, setSearchQuery: setGlobalSearchQuery } = useUIStore();
+
+  // Initialize search query from global state if available
+  useEffect(() => {
+    if (globalSearchQuery && !searchQuery) {
+      setSearchQuery(globalSearchQuery);
+    }
+  }, [globalSearchQuery, searchQuery]);
 
   // Get all unique skills for filter
   const allSkills = Array.from(
     new Set(
-      developers
+      (developers || [])
         .flatMap(dev => dev.skills || [])
         .sort()
     )
   );
 
   useEffect(() => {
-    const loadDevelopers = async () => {
-      try {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('username, full_name, bio, skills, avatar_url')
-          .not('username', 'is', null);
-
-        if (profiles) {
-          setDevelopers(profiles);
-          setFilteredDevelopers(profiles);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading developers:', error);
-        setLoading(false);
-      }
-    };
-
-    loadDevelopers();
-  }, [supabase]);
-
-  useEffect(() => {
+    if (!developers) return;
+    
     let filtered = developers;
 
     // Filter by search query
@@ -76,7 +57,7 @@ export default function SearchPage() {
     setFilteredDevelopers(filtered);
   }, [searchQuery, selectedSkill, developers]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center space-y-4">
@@ -95,7 +76,7 @@ export default function SearchPage() {
             Search Developers
           </h1>
           <p className="text-muted-foreground">
-            Connect with {developers.length} developers in Nagpur&apos;s tech community
+            Connect with {developers?.length || 0} developers in Nagpur&apos;s tech community
           </p>
         </div>
 
@@ -112,7 +93,10 @@ export default function SearchPage() {
                 placeholder="Search by name, username, bio, or skills..."
                 className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setGlobalSearchQuery(e.target.value); // Update global search state
+                }}
               />
             </div>
 

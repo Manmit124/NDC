@@ -1,47 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useOnboardingCheck } from "@/hooks/auth/useAuth";
 
 export default function OnboardingPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
+  const { user, profile, needsOnboarding, isLoading } = useOnboardingCheck();
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    if (!isLoading) {
       if (!user) {
         router.push("/login");
         return;
       }
 
-      // Check if user already has a profile
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id);
-
-      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-      
-      if (profile?.username) {
+      if (!needsOnboarding && profile?.username) {
         // User already has a profile, redirect to dashboard
         router.push("/");
         return;
       }
+    }
+  }, [user, profile, needsOnboarding, isLoading, router]);
 
-      setUser(user);
-      setLoading(false);
-    };
-
-    checkUser();
-  }, [supabase, router]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">

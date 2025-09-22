@@ -1,72 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useDashboardStats } from "@/hooks/api/useDashboard";
 import Link from "next/link";
 
-interface Profile {
-  username: string;
-  full_name: string;
-  bio?: string;
-  skills?: string[];
-  avatar_url?: string;
-}
-
-interface DashboardStats {
-  totalDevelopers: number;
-  totalJobs: number;
-  totalQuestions: number;
-}
-
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalDevelopers: 0,
-    totalJobs: 0,
-    totalQuestions: 0
-  });
-  const [loading, setLoading] = useState(true);
-  
-  const supabase = createClient();
+  // Use our new hooks instead of manual state management
+  const { profile } = useAuth();
+  const { data: stats, isLoading } = useDashboardStats();
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (user) {
-          // Get user profile
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id);
-
-          if (profiles && profiles.length > 0) {
-            setProfile(profiles[0]);
-          }
-
-          // Get community stats
-          const { data: allProfiles } = await supabase
-            .from('profiles')
-            .select('id');
-
-          setStats({
-            totalDevelopers: allProfiles?.length || 0,
-            totalJobs: 12, // Placeholder - will be replaced when jobs table is created
-            totalQuestions: 8 // Placeholder - will be replaced when Q&A table is created
-          });
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        setLoading(false);
-      }
-    };
-
-    loadDashboardData();
-  }, [supabase]);
+  // Combined loading state
+  const loading = isLoading;
 
   if (loading) {
     return (
@@ -92,39 +36,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                 <span className="text-2xl">👥</span>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-foreground">{stats.totalDevelopers}</p>
+                <p className="text-2xl font-semibold text-foreground">{stats?.totalDevelopers || 0}</p>
                 <p className="text-sm text-muted-foreground">Developers</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">💼</span>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-foreground">{stats.totalJobs}</p>
-                <p className="text-sm text-muted-foreground">Active Jobs</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">❓</span>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-foreground">{stats.totalQuestions}</p>
-                <p className="text-sm text-muted-foreground">Q&A Posts</p>
               </div>
             </div>
           </div>
@@ -133,18 +53,7 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="bg-card border border-border rounded-lg p-6">
           <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
-              href="/jobs"
-              className="flex items-center space-x-3 p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
-            >
-              <span className="text-2xl">💼</span>
-              <div>
-                <p className="font-medium text-foreground">Browse Jobs</p>
-                <p className="text-sm text-muted-foreground">Find opportunities</p>
-              </div>
-            </Link>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               href="/search"
               className="flex items-center space-x-3 p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
@@ -156,27 +65,18 @@ export default function DashboardPage() {
               </div>
             </Link>
 
-            <Link
-              href="/qa"
-              className="flex items-center space-x-3 p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
-            >
-              <span className="text-2xl">❓</span>
-              <div>
-                <p className="font-medium text-foreground">Ask Question</p>
-                <p className="text-sm text-muted-foreground">Get help</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/chat"
-              className="flex items-center space-x-3 p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
-            >
-              <span className="text-2xl">💬</span>
-              <div>
-                <p className="font-medium text-foreground">Join Chat</p>
-                <p className="text-sm text-muted-foreground">Community discussion</p>
-              </div>
-            </Link>
+            {profile?.username && (
+              <Link
+                href={`/profile/${profile.username}`}
+                className="flex items-center space-x-3 p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+              >
+                <span className="text-2xl">👤</span>
+                <div>
+                  <p className="font-medium text-foreground">View Profile</p>
+                  <p className="text-sm text-muted-foreground">Manage your profile</p>
+                </div>
+              </Link>
+            )}
           </div>
         </div>
 
