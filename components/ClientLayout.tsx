@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useUIStore } from "@/stores/ui";
 import Link from "next/link";
 import Image from "next/image";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -188,6 +189,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                   Complete Setup
                 </Link>
               )}
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-muted-foreground">Theme</span>
+                <ThemeToggle />
+              </div>
               <button
                 onClick={handleSignOut}
                 className="block w-full text-left px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
@@ -214,7 +219,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <Link href="/dashboard" className="font-semibold text-foreground">
             NDC
           </Link>
-          <div className="w-6" /> {/* Spacer */}
+          <ThemeToggle />
         </div>
 
         {/* Page content - Scrollable */}
