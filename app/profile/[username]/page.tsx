@@ -54,95 +54,144 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-6">
       {/* Edit Button for Own Profile */}
       {isOwnProfile && (
         <div className="mb-6 flex justify-end">
           <button
             onClick={() => setEditing(!editing)}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            {editing ? "Cancel" : "Edit Profile"}
+            {editing ? "Cancel" : "✨ Edit Profile"}
           </button>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="space-y-8">
           {/* Profile Header */}
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-6 bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl p-8 shadow-xl">
             {/* Avatar */}
-            <div className="w-32 h-32 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-              {profile.avatar_url ? (
-                <Image
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  width={128}
-                  height={128}
-                  className="w-32 h-32 rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-4xl font-semibold text-primary">
-                  {profile.full_name.charAt(0).toUpperCase()}
-                </span>
-              )}
+            <div className="relative group">
+              <div className="w-36 h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full flex items-center justify-center mx-auto shadow-2xl ring-4 ring-primary/20 group-hover:ring-primary/30 transition-all duration-500">
+                {profile.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt={profile.full_name}
+                    width={144}
+                    height={144}
+                    className="w-36 h-36 rounded-full object-cover shadow-lg"
+                  />
+                ) : (
+                  <span className="text-5xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                    {profile.full_name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {/* Decorative rings */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/10 to-transparent animate-pulse"></div>
             </div>
 
-            {/* Name and Username */}
-            <div>
-              <h1 className="text-4xl font-semibold text-foreground mb-2">
+            {/* Name */}
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
                 {profile.full_name}
               </h1>
-              <p className="text-xl text-muted-foreground">@{profile.username}</p>
-              {isOwnProfile && (
-                <p className="text-sm text-muted-foreground mt-2">
+              {/* {isOwnProfile && (
+                <p className="text-sm text-muted-foreground">
                   This is your profile - others see it this way
                 </p>
-              )}
+              )} */}
             </div>
 
             {/* Bio */}
             {profile.bio && (
-              <div className="max-w-2xl mx-auto">
-                <p className="text-lg text-muted-foreground leading-relaxed">
+              <div className="max-w-xl mx-auto">
+                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
                   {profile.bio}
                 </p>
               </div>
             )}
+
+            {/* Profile Info */}
+            <div className="space-y-4 pt-4">
+              {/* Joined Date */}
+              <div className="flex items-center justify-center gap-3 bg-muted/30 rounded-full px-4 py-2 mx-auto w-fit backdrop-blur-sm">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm">📅</span>
+                </div>
+                <span className="text-foreground font-medium">
+                  Joined {new Date(profile.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+
+              {/* Portfolio URL */}
+              {profile.portfolio_url && (
+                <div className="flex items-center justify-center gap-3 bg-muted/30 rounded-full px-4 py-2 mx-auto w-fit backdrop-blur-sm hover:bg-muted/40 transition-all duration-300">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">🔗</span>
+                  </div>
+                  <a
+                    href={profile.portfolio_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 transition-colors font-medium"
+                    title={profile.portfolio_url}
+                  >
+                    {(() => {
+                      const displayUrl = profile.portfolio_url.replace(/^https?:\/\//, '');
+                      return displayUrl.length > 25 
+                        ? `${displayUrl.substring(0, 25)}...` 
+                        : displayUrl;
+                    })()}
+                  </a>
+                </div>
+              )}
+
+              {/* Skills */}
+              {profile.skills && profile.skills.length > 0 && (
+                <div className="pt-2">
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {profile.skills.map((skill, index) => (
+                      <span
+                        key={skill}
+                        className="px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 text-primary text-sm rounded-full font-medium border border-primary/20 hover:border-primary/40 hover:from-primary/20 hover:to-primary/10 transition-all duration-300 transform hover:scale-105 shadow-sm"
+                        style={{
+                          animationDelay: `${index * 100}ms`
+                        }}
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Skills Section */}
-          {profile.skills && profile.skills.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">Skills</h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full font-medium"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Social Links */}
-          {(profile.github_url || profile.linkedin_url || profile.portfolio_url) && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">Connect</h2>
-              <div className="flex flex-wrap gap-4">
+          {(profile.github_url || profile.linkedin_url) && (
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-lg">
+              <h2 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                Connect
+              </h2>
+              <div className="flex flex-wrap gap-4 justify-center">
                 {profile.github_url && (
                   <a
                     href={profile.github_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md transition-colors"
+                    className="group flex items-center space-x-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white hover:from-gray-700 hover:to-gray-800 px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                   >
-                    <span>🐙</span>
-                    <span>GitHub</span>
+                    <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                      <span className="text-lg">🐙</span>
+                    </div>
+                    <span className="font-medium">GitHub</span>
                   </a>
                 )}
                 {profile.linkedin_url && (
@@ -150,21 +199,12 @@ export default function ProfilePage() {
                     href={profile.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md transition-colors"
+                    className="group flex items-center space-x-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600 px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                   >
-                    <span>💼</span>
-                    <span>LinkedIn</span>
-                  </a>
-                )}
-                {profile.portfolio_url && (
-                  <a
-                    href={profile.portfolio_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center space-x-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md transition-colors"
-                  >
-                    <span>🌐</span>
-                    <span>Portfolio</span>
+                    <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                      <span className="text-lg">💼</span>
+                    </div>
+                    <span className="font-medium">LinkedIn</span>
                   </a>
                 )}
               </div>
@@ -173,30 +213,22 @@ export default function ProfilePage() {
 
           {/* Empty State for Own Profile */}
           {isOwnProfile && !profile.bio && (!profile.skills || profile.skills.length === 0) && !profile.github_url && !profile.linkedin_url && !profile.portfolio_url && (
-            <div className="bg-muted/30 border border-dashed border-muted-foreground/30 rounded-lg p-8 text-center">
-              <div className="text-4xl mb-4">✨</div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+            <div className="bg-gradient-to-br from-muted/20 to-muted/10 border-2 border-dashed border-primary/30 rounded-2xl p-8 text-center backdrop-blur-sm">
+              <div className="text-6xl mb-6 animate-bounce">✨</div>
+              <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Complete Your Profile
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-6 text-lg leading-relaxed">
                 Add your bio, skills, and social links to help other developers connect with you.
               </p>
               <button
                 onClick={() => setEditing(true)}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-md font-medium transition-colors"
+                className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 px-8 py-3 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
-                Edit Profile
+                🚀 Edit Profile
               </button>
             </div>
           )}
-
-          {/* Member Since */}
-          <div className="text-center text-sm text-muted-foreground">
-            Member since {new Date(profile.updated_at).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long'
-            })}
-          </div>
         </div>
       </div>
 

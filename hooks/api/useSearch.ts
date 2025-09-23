@@ -10,7 +10,7 @@ const supabase = createClient()
 async function fetchAllProfiles(): Promise<Profile[]> {
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, full_name, bio, skills, avatar_url, updated_at')
+    .select('id, username, full_name, bio, skills, avatar_url, updated_at, created_at')
     .not('username', 'is', null)
 
   return profiles || []

@@ -23,6 +23,7 @@ export interface Profile {
   portfolio_url?: string
   skills?: string[]
   updated_at: string
+  created_at: string
 }
 
 export interface ProfileInsert extends Omit<Profile, 'updated_at'> {
