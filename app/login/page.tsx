@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
 import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,7 +22,7 @@ export default function LoginPage() {
 
     login({ email, password }, {
       onSuccess: () => {
-        router.push("/");
+        router.push("/dashboard");
       }
     });
   };
@@ -56,87 +60,90 @@ export default function LoginPage() {
                 Welcome back
               </h1>
               <p className="text-muted-foreground">
-                Sign in to your account to continue
+                Sign in to continue to NDC
               </p>
             </div>
           </div>
 
           {/* Login Form */}
-          <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
-            <form className="space-y-6" onSubmit={handleLogin}>
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-foreground">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              {/* Error Message */}
-              {loginError && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                  <p className="text-destructive text-sm">{loginError.message}</p>
+          <Card>
+            
+            <CardHeader className="text-center">
+              <CardTitle>Sign in to your account</CardTitle>
+              <CardDescription>
+                Enter your credentials to access your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={handleLogin}>
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
-              )}
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoggingIn}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
-              >
-                {isLoggingIn ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
-                    <span>Signing in...</span>
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+
+                {/* Error Message */}
+                {loginError && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                    <p className="text-destructive text-sm">{loginError.message}</p>
                   </div>
-                ) : (
-                  "Sign in"
                 )}
-              </button>
-            </form>
 
-            {/* Signup Link */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href="/signup"
-                  className="font-medium text-primary hover:text-primary/80 transition-colors"
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={isLoggingIn}
+                  className="w-full"
                 >
-                  Sign up
-                </Link>
-              </p>
-            </div>
-          </div>
+                  {isLoggingIn ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
+                      <span>Signing in...</span>
+                    </div>
+                  ) : (
+                    "Sign in"
+                  )}
+                </Button>
+              </form>
+
+              {/* Signup Link */}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    href="/signup"
+                    className="font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Footer */}
           <div className="text-center">
