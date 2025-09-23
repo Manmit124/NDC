@@ -91,7 +91,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   // Dashboard layout with sidebar
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="h-screen bg-background flex overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -102,7 +102,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         </div>
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed position */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
@@ -199,10 +199,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main content - Scrollable area */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
         {/* Top bar for mobile */}
-        <div className="lg:hidden flex items-center justify-between h-16 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30">
+        <div className="lg:hidden flex items-center justify-between h-16 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30 flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-muted-foreground hover:text-foreground"
@@ -217,8 +217,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="w-6" /> {/* Spacer */}
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 min-h-0">
+        {/* Page content - Scrollable */}
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
