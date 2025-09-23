@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
 
   // If accessing login or signup page while authenticated, redirect to root
   if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return supabaseResponse

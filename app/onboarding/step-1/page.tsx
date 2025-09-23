@@ -29,7 +29,7 @@ export default function OnboardingStep1() {
 
       if (profile?.username) {
         // User already has a profile, redirect to dashboard
-        router.push("/");
+        router.push("/dashboard");
         return;
       }
 

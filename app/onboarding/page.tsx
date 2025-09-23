@@ -17,7 +17,7 @@ export default function OnboardingPage() {
 
       if (!needsOnboarding && profile?.username) {
         // User already has a profile, redirect to dashboard
-        router.push("/");
+        router.push("/dashboard");
         return;
       }
     }

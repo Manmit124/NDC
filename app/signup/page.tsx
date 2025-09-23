@@ -44,7 +44,7 @@ export default function SignupPage() {
           setSuccess("Please check your email to confirm your account before signing in.");
         } else {
           // User is automatically signed in
-          router.push("/");
+          router.push("/dashboard");
         }
       }
     });
