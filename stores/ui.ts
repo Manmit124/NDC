@@ -1,6 +1,23 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+// Onboarding data types
+interface OnboardingData {
+  step1: {
+    username: string
+    fullName: string
+  }
+  step2: {
+    bio: string
+    skills: string[]
+  }
+  step3: {
+    githubUrl: string
+    linkedinUrl: string
+    portfolioUrl: string
+  }
+}
+
 interface UIState {
   // Sidebar state - matches your ClientLayout pattern
   sidebarOpen: boolean
@@ -22,6 +39,13 @@ interface UIState {
   searchQuery: string
   setSearchQuery: (query: string) => void
   clearSearch: () => void
+  
+  // Onboarding state
+  currentOnboardingStep: number
+  onboardingData: OnboardingData
+  setOnboardingStep: (step: number) => void
+  updateOnboardingData: <K extends keyof OnboardingData>(step: K, data: Partial<OnboardingData[K]>) => void
+  resetOnboarding: () => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -55,12 +79,43 @@ export const useUIStore = create<UIState>()(
       searchQuery: '',
       setSearchQuery: (query) => set({ searchQuery: query }),
       clearSearch: () => set({ searchQuery: '' }),
+      
+      // Onboarding - temporary client state for multi-step flow
+      currentOnboardingStep: 1,
+      onboardingData: {
+        step1: { username: '', fullName: '' },
+        step2: { bio: '', skills: [] },
+        step3: { githubUrl: '', linkedinUrl: '', portfolioUrl: '' }
+      },
+      setOnboardingStep: (step) => {
+        console.log('Setting onboarding step to:', step);
+        set({ currentOnboardingStep: step });
+      },
+      updateOnboardingData: (step, data) => {
+        console.log('Updating onboarding data:', step, data);
+        set((state) => ({
+          onboardingData: {
+            ...state.onboardingData,
+            [step]: { ...state.onboardingData[step], ...data }
+          }
+        }));
+      },
+      resetOnboarding: () => set({
+        currentOnboardingStep: 1,
+        onboardingData: {
+          step1: { username: '', fullName: '' },
+          step2: { bio: '', skills: [] },
+          step3: { githubUrl: '', linkedinUrl: '', portfolioUrl: '' }
+        }
+      }),
     }),
     {
       name: 'ndc-ui-storage',
-      // Only persist theme
+      // Only persist theme and onboarding progress
       partialize: (state) => ({
         theme: state.theme,
+        currentOnboardingStep: state.currentOnboardingStep,
+        onboardingData: state.onboardingData,
       }),
     }
   )

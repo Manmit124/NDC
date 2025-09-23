@@ -3,23 +3,29 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useUIStore } from "@/stores/ui";
 import { createClient } from "@/utils/supabase/client";
+import { useDebounce } from 'use-debounce';
 import Link from "next/link";
 
-export default function OnboardingStep1() {
+export default function Step1() {
   const [submitting, setSubmitting] = useState(false);
   const [username, setUsername] = useState("");
+  const [value] = useDebounce(username, 2000);
   const [fullName, setFullName] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [error, setError] = useState("");
-  
+
   const router = useRouter();
   const supabase = createClient();
-  
-  // Use our auth hook instead of manual state management
   const { user, profile, isLoading } = useAuth();
+  const { onboardingData, updateOnboardingData, setOnboardingStep, currentOnboardingStep } = useUIStore();
 
+  // Log current step for debugging
+  console.log('Step1 component - Current onboarding step:', currentOnboardingStep);
+
+  // Initialize with stored data or prefill from auth
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
@@ -33,45 +39,71 @@ export default function OnboardingStep1() {
         return;
       }
 
-      // Pre-fill full name if available from auth metadata
-      if (user.user_metadata?.name) {
+      // Initialize with stored onboarding data or prefill from auth
+      if (onboardingData.step1.username) {
+        setUsername(onboardingData.step1.username);
+      }
+
+      if (onboardingData.step1.fullName) {
+        setFullName(onboardingData.step1.fullName);
+      } else if (user.user_metadata?.name) {
+        // Pre-fill full name if available from auth metadata
         setFullName(user.user_metadata.name);
       }
     }
-  }, [user, profile, isLoading, router]);
+  }, [user, profile, isLoading, router, onboardingData]);
 
-  // Check username availability
+  // Check username availability with debouncing
   useEffect(() => {
-    const checkUsername = async () => {
+    const checkUsernameAvailability = async () => {
       if (!username || username.length < 3) {
         setUsernameAvailable(null);
         return;
       }
 
       setUsernameChecking(true);
-      
-      const { data } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', username.toLowerCase());
 
-      // Username is available if no data is returned
-      setUsernameAvailable(!data || data.length === 0);
-      setUsernameChecking(false);
+      try {
+        // Use direct Supabase call instead of mutation to avoid repeated calls
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username.toLowerCase());
+
+        // Username is available if no data is returned
+        const isAvailable = !data || data.length === 0;
+        setUsernameAvailable(isAvailable);
+      } catch (error) {
+        console.error('Username check failed:', error);
+        setUsernameAvailable(null);
+      } finally {
+        setUsernameChecking(false);
+      }
     };
 
-    const timeoutId = setTimeout(checkUsername, 500);
+    const timeoutId = setTimeout(checkUsernameAvailability, 500);
     return () => clearTimeout(timeoutId);
-  }, [username, supabase]);
+  }, [value]);
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
     setUsername(value);
+    // Update store with current input
+    updateOnboardingData('step1', { username: value });
+  };
+
+  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFullName(value);
+    // Update store with current input
+    updateOnboardingData('step1', { fullName: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    console.log('Step1 form submitted:', { username, fullName, usernameAvailable });
+
     if (!username || !fullName) {
       setError("Please fill in all required fields");
       return;
@@ -82,35 +114,8 @@ export default function OnboardingStep1() {
       return;
     }
 
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: user!.id,
-          username: username.toLowerCase(),
-          full_name: fullName,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      // Success - redirect to step 2
-      router.push("/onboarding/step-2");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSkipToComplete = async () => {
-    if (!username || !fullName || usernameAvailable === false) {
-      setError("Username and full name are required");
+    if (usernameAvailable === null) {
+      setError("Please wait for username validation to complete");
       return;
     }
 
@@ -118,22 +123,20 @@ export default function OnboardingStep1() {
     setError("");
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: user!.id,
-          username: username.toLowerCase(),
-          full_name: fullName,
-          updated_at: new Date().toISOString()
-        });
+      // Just update store with validated data, don't save to Supabase yet
+      console.log('Updating step1 data:', { username: username.toLowerCase(), fullName });
+      updateOnboardingData('step1', { username: username.toLowerCase(), fullName });
 
-      if (error) {
-        throw error;
-      }
+      console.log('Step1 data updated, moving to step 2');
 
-      // Skip to profile page
-      router.push(`/profile/${username.toLowerCase()}`);
+      // Add a small delay to ensure state is updated
+      setTimeout(() => {
+        console.log('About to set step to 2');
+        setOnboardingStep(2);
+        console.log('Step set to 2');
+      }, 100);
     } catch (err: unknown) {
+      console.error('Step1 submission error:', err);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSubmitting(false);
@@ -228,7 +231,7 @@ export default function OnboardingStep1() {
                     maxLength={30}
                   />
                 </div>
-                
+
                 {/* Username Status */}
                 {username && (
                   <div className="text-sm">
@@ -241,7 +244,7 @@ export default function OnboardingStep1() {
                     ) : null}
                   </div>
                 )}
-                
+
                 {username && usernameAvailable && (
                   <p className="text-xs text-muted-foreground">
                     Your profile will be: ndc.com/profile/{username}
@@ -262,7 +265,7 @@ export default function OnboardingStep1() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
                   placeholder="Enter your full name"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={handleFullNameChange}
                 />
               </div>
 
@@ -277,26 +280,17 @@ export default function OnboardingStep1() {
               <div className="flex flex-col space-y-3">
                 <button
                   type="submit"
-                  disabled={submitting || !username || !fullName || usernameAvailable === false}
+                  disabled={submitting || !username || !fullName || usernameAvailable !== true}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
                 >
                   {submitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
-                      <span>Setting up profile...</span>
+                      <span>Validating...</span>
                     </div>
                   ) : (
                     "Continue to Skills"
                   )}
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={handleSkipToComplete}
-                  disabled={submitting || !username || !fullName || usernameAvailable === false}
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
-                >
-                  Skip - Complete Later
                 </button>
               </div>
             </form>

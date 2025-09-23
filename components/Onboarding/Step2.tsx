@@ -3,98 +3,113 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { createClient } from "@/utils/supabase/client";
+import { useUIStore } from "@/stores/ui";
 import Link from "next/link";
 
 // Predefined skills categories
 const skillsCategories = {
   frontend: [
-    "React", "JavaScript", "Vue.js", "Angular", "HTML/CSS", "TypeScript", 
+    "React", "JavaScript", "Vue.js", "Angular", "HTML/CSS", "TypeScript",
     "Next.js", "Svelte", "jQuery", "Bootstrap", "Tailwind CSS"
   ],
   backend: [
-    "Node.js", "Python", "Java", "PHP", "Django", "Express.js", 
+    "Node.js", "Python", "Java", "PHP", "Django", "Express.js",
     "Spring", "Laravel", "Ruby", "Go", "C#", ".NET"
   ],
   database: [
-    "MongoDB", "PostgreSQL", "MySQL", "Redis", "Firebase", "SQLite", 
+    "MongoDB", "PostgreSQL", "MySQL", "Redis", "Firebase", "SQLite",
     "Oracle", "Cassandra", "DynamoDB"
   ],
   mobile: [
-    "React Native", "Flutter", "Swift", "Kotlin", "Ionic", "Xamarin", 
+    "React Native", "Flutter", "Swift", "Kotlin", "Ionic", "Xamarin",
     "Android", "iOS"
   ],
   devops: [
-    "Docker", "AWS", "Azure", "GCP", "Kubernetes", "Jenkins", 
+    "Docker", "AWS", "Azure", "GCP", "Kubernetes", "Jenkins",
     "Git", "Linux", "Nginx", "Apache"
   ],
   other: [
-    "Machine Learning", "AI", "Blockchain", "GraphQL", "REST API", 
+    "Machine Learning", "AI", "Blockchain", "GraphQL", "REST API",
     "Microservices", "Testing", "Agile", "Scrum"
   ]
 };
 
-export default function OnboardingStep2() {
+export default function Step2() {
   const [submitting, setSubmitting] = useState(false);
   const [bio, setBio] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [error, setError] = useState("");
-  
-  const router = useRouter();
-  const supabase = createClient();
-  
-  // Use our auth hook instead of manual state management
-  const { user, profile, isLoading } = useAuth();
 
+  const router = useRouter();
+  const { user, profile, isLoading } = useAuth();
+  const { onboardingData, updateOnboardingData, setOnboardingStep } = useUIStore();
+
+  // Initialize with stored data or existing profile data
   useEffect(() => {
+    console.log('Step2 useEffect:', {
+      isLoading,
+      user: !!user,
+      profile: !!profile?.username,
+      onboardingData: onboardingData.step1
+    });
+
     if (!isLoading) {
       if (!user) {
         router.push("/login");
         return;
       }
 
-      if (!profile?.username) {
-        // User hasn't completed Step 1, redirect back
-        router.push("/onboarding/step-1");
+      // Check if user has completed Step 1 by looking at onboarding data
+      if (!onboardingData.step1.username || !onboardingData.step1.fullName) {
+        console.log('Step1 data missing, redirecting to step 1');
+        setOnboardingStep(1);
         return;
       }
 
-      // Pre-fill existing data if available
-      if (profile.bio) setBio(profile.bio);
-      if (profile.skills) setSelectedSkills(profile.skills);
+      // Initialize with stored onboarding data or existing profile data
+      if (onboardingData.step2.bio) {
+        setBio(onboardingData.step2.bio);
+      } else if (profile?.bio) {
+        setBio(profile.bio);
+      }
+
+      if (onboardingData.step2.skills.length > 0) {
+        setSelectedSkills(onboardingData.step2.skills);
+      } else if (profile?.skills) {
+        setSelectedSkills(profile.skills);
+      }
     }
-  }, [user, profile, isLoading, router]);
+  }, [user, profile, isLoading, router, onboardingData, setOnboardingStep]);
 
   const toggleSkill = (skill: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
-    );
+    const newSkills = selectedSkills.includes(skill)
+      ? selectedSkills.filter(s => s !== skill)
+      : [...selectedSkills, skill];
+
+    setSelectedSkills(newSkills);
+    // Update store with current selection
+    updateOnboardingData('step2', { skills: newSkills });
+  };
+
+  const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setBio(value);
+    // Update store with current input
+    updateOnboardingData('step2', { bio: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setSubmitting(true);
     setError("");
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          bio: bio.trim() || null,
-          skills: selectedSkills.length > 0 ? selectedSkills : null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user!.id);
+      // Just update store with collected data, don't save to Supabase yet
+      updateOnboardingData('step2', { bio: bio.trim(), skills: selectedSkills });
 
-      if (error) {
-        throw error;
-      }
-
-      // Success - redirect to step 3
-      router.push("/onboarding/step-3");
+      // Move to step 3
+      setOnboardingStep(3);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -102,44 +117,8 @@ export default function OnboardingStep2() {
     }
   };
 
-  const handleSkipToComplete = async () => {
-    setSubmitting(true);
-    setError("");
-
-    try {
-      // Update with current data (even if empty)
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          bio: bio.trim() || null,
-          skills: selectedSkills.length > 0 ? selectedSkills : null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user!.id);
-
-      if (error) {
-        throw error;
-      }
-
-      // Fetch profile to get username
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user!.id);
-
-      const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-
-      // Skip to profile page
-      if (profile?.username) {
-        router.push(`/profile/${profile.username}`);
-      } else {
-        router.push("/profile");
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleBackToStep1 = () => {
+    setOnboardingStep(1);
   };
 
   if (isLoading) {
@@ -217,7 +196,7 @@ export default function OnboardingStep2() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors resize-none"
                   placeholder="Full-stack developer passionate about React and Node.js. Love building scalable web apps and contributing to open source projects."
                   value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  onChange={handleBioChange}
                   maxLength={500}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -230,7 +209,7 @@ export default function OnboardingStep2() {
                 <h3 className="text-sm font-medium text-foreground">
                   Your Skills (Select all that apply)
                 </h3>
-                
+
                 {Object.entries(skillsCategories).map(([category, skills]) => (
                   <div key={category} className="space-y-3">
                     <h4 className="text-sm font-medium text-foreground capitalize border-b border-border pb-1">
@@ -242,11 +221,10 @@ export default function OnboardingStep2() {
                           key={skill}
                           type="button"
                           onClick={() => toggleSkill(skill)}
-                          className={`px-3 py-2 text-sm rounded-md border transition-colors text-left ${
-                            selectedSkills.includes(skill)
+                          className={`px-3 py-2 text-sm rounded-md border transition-colors text-left ${selectedSkills.includes(skill)
                               ? 'bg-primary text-primary-foreground border-primary'
                               : 'bg-background text-foreground border-input hover:bg-muted'
-                          }`}
+                            }`}
                         >
                           {selectedSkills.includes(skill) ? '✓ ' : ''}{skill}
                         </button>
@@ -254,7 +232,7 @@ export default function OnboardingStep2() {
                     </div>
                   </div>
                 ))}
-                
+
                 {selectedSkills.length > 0 && (
                   <div className="mt-4 p-3 bg-muted/50 rounded-md">
                     <p className="text-sm text-muted-foreground mb-2">Selected skills:</p>
@@ -289,33 +267,26 @@ export default function OnboardingStep2() {
                   {submitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
-                      <span>Saving...</span>
+                      <span>Proceeding...</span>
                     </div>
                   ) : (
                     "Continue to Links"
                   )}
                 </button>
-                
-                <button
-                  type="button"
-                  onClick={handleSkipToComplete}
-                  disabled={submitting}
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
-                >
-                  Skip - Complete Later
-                </button>
+
               </div>
             </form>
           </div>
 
           {/* Navigation */}
           <div className="text-center">
-            <Link
-              href="/onboarding/step-1"
+            <button
+              type="button"
+              onClick={handleBackToStep1}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Back to Step 1
-            </Link>
+            </button>
           </div>
         </div>
       </main>
