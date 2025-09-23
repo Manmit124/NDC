@@ -3,21 +3,23 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { createClient } from "@/utils/supabase/client";
+import { useCompleteOnboarding } from "@/hooks/api/useOnboarding";
+import { useUIStore } from "@/stores/ui";
 import Link from "next/link";
 
-export default function OnboardingStep3() {
-  // Use our auth hook instead of manual state management
+export default function Step3() {
   const { user, profile, isLoading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [githubUrl, setGithubUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [error, setError] = useState("");
-  
-  const router = useRouter();
-  const supabase = createClient();
 
+  const router = useRouter();
+  const completeOnboarding = useCompleteOnboarding();
+  const { onboardingData, updateOnboardingData, setOnboardingStep, resetOnboarding } = useUIStore();
+
+  // Initialize with stored data or existing profile data
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
@@ -25,25 +27,40 @@ export default function OnboardingStep3() {
         return;
       }
 
-      if (!profile?.username) {
-        // User hasn't completed Step 1, redirect back
-        router.push("/onboarding/step-1");
+      // Check if user has completed Step 1 by looking at onboarding data
+      if (!onboardingData.step1.username || !onboardingData.step1.fullName) {
+        console.log('Step1 data missing, redirecting to step 1');
+        setOnboardingStep(1);
         return;
       }
 
-      // Pre-fill existing data if available
-      if (profile.github_url) setGithubUrl(profile.github_url);
-      if (profile.linkedin_url) setLinkedinUrl(profile.linkedin_url);
-      if (profile.portfolio_url) setPortfolioUrl(profile.portfolio_url);
+      // Initialize with stored onboarding data or existing profile data
+      if (onboardingData.step3.githubUrl) {
+        setGithubUrl(onboardingData.step3.githubUrl);
+      } else if (profile?.github_url) {
+        setGithubUrl(profile.github_url);
+      }
+
+      if (onboardingData.step3.linkedinUrl) {
+        setLinkedinUrl(onboardingData.step3.linkedinUrl);
+      } else if (profile?.linkedin_url) {
+        setLinkedinUrl(profile.linkedin_url);
+      }
+
+      if (onboardingData.step3.portfolioUrl) {
+        setPortfolioUrl(onboardingData.step3.portfolioUrl);
+      } else if (profile?.portfolio_url) {
+        setPortfolioUrl(profile.portfolio_url);
+      }
     }
-  }, [user, profile, isLoading, router]);
+  }, [user, profile, isLoading, router, onboardingData, setOnboardingStep]);
 
   const validateUrl = (url: string, platform: string): string | null => {
     if (!url) return null;
-    
+
     try {
       const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-      
+
       switch (platform) {
         case 'github':
           if (!urlObj.hostname.includes('github.com')) {
@@ -59,7 +76,7 @@ export default function OnboardingStep3() {
           // Any valid URL is acceptable for portfolio
           break;
       }
-      
+
       return null;
     } catch {
       return 'Please enter a valid URL';
@@ -71,39 +88,71 @@ export default function OnboardingStep3() {
     return url.startsWith('http') ? url : `https://${url}`;
   };
 
+  const handleGithubChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setGithubUrl(value);
+    updateOnboardingData('step3', { githubUrl: value });
+  };
+
+  const handleLinkedinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLinkedinUrl(value);
+    updateOnboardingData('step3', { linkedinUrl: value });
+  };
+
+  const handlePortfolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPortfolioUrl(value);
+    updateOnboardingData('step3', { portfolioUrl: value });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate URLs
     const githubError = validateUrl(githubUrl, 'github');
     const linkedinError = validateUrl(linkedinUrl, 'linkedin');
     const portfolioError = validateUrl(portfolioUrl, 'portfolio');
-    
+
     if (githubError || linkedinError || portfolioError) {
       setError(githubError || linkedinError || portfolioError || '');
       return;
     }
-    
+
     setSubmitting(true);
     setError("");
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          github_url: githubUrl ? normalizeUrl(githubUrl) : null,
-          linkedin_url: linkedinUrl ? normalizeUrl(linkedinUrl) : null,
-          portfolio_url: portfolioUrl ? normalizeUrl(portfolioUrl) : null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user!.id);
+      // Collect all onboarding data and save to Supabase
+      const step1Data = onboardingData.step1;
+      const step2Data = onboardingData.step2;
 
-      if (error) {
-        throw error;
+      if (!step1Data.username || !step1Data.fullName) {
+        setError("Missing required information from previous steps");
+        return;
       }
 
-      // Success - redirect to profile page
-      router.push(`/profile/${profile!.username}`);
+      await completeOnboarding.mutateAsync({
+        id: user!.id,
+        username: step1Data.username,
+        fullName: step1Data.fullName,
+        bio: step2Data.bio || undefined,
+        skills: step2Data.skills && step2Data.skills.length > 0 ? step2Data.skills : undefined,
+        githubUrl: githubUrl || undefined,
+        linkedinUrl: linkedinUrl || undefined,
+        portfolioUrl: portfolioUrl || undefined,
+      });
+
+      // Update store with final data
+      updateOnboardingData('step3', {
+        githubUrl: githubUrl ? normalizeUrl(githubUrl) : '',
+        linkedinUrl: linkedinUrl ? normalizeUrl(linkedinUrl) : '',
+        portfolioUrl: portfolioUrl ? normalizeUrl(portfolioUrl) : ''
+      });
+
+      // Onboarding complete! Reset onboarding state and redirect to profile
+      resetOnboarding();
+      router.push(`/profile/${step1Data.username}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -111,33 +160,8 @@ export default function OnboardingStep3() {
     }
   };
 
-  const handleSkipToComplete = async () => {
-    setSubmitting(true);
-    setError("");
-
-    try {
-      // Update with current data (even if empty)
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          github_url: githubUrl ? normalizeUrl(githubUrl) : null,
-          linkedin_url: linkedinUrl ? normalizeUrl(linkedinUrl) : null,
-          portfolio_url: portfolioUrl ? normalizeUrl(portfolioUrl) : null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user!.id);
-
-      if (error) {
-        throw error;
-      }
-
-      // Skip to profile page
-      router.push(`/profile/${profile!.username}`);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleBackToStep2 = () => {
+    setOnboardingStep(2);
   };
 
   if (isLoading) {
@@ -216,7 +240,7 @@ export default function OnboardingStep3() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
                   placeholder="https://github.com/yourusername"
                   value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
+                  onChange={handleGithubChange}
                 />
               </div>
 
@@ -233,7 +257,7 @@ export default function OnboardingStep3() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
                   placeholder="https://linkedin.com/in/yourusername"
                   value={linkedinUrl}
-                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  onChange={handleLinkedinChange}
                 />
               </div>
 
@@ -250,7 +274,7 @@ export default function OnboardingStep3() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
                   placeholder="https://yourportfolio.com"
                   value={portfolioUrl}
-                  onChange={(e) => setPortfolioUrl(e.target.value)}
+                  onChange={handlePortfolioChange}
                 />
               </div>
 
@@ -277,27 +301,20 @@ export default function OnboardingStep3() {
                     "Complete Profile"
                   )}
                 </button>
-                
-                <button
-                  type="button"
-                  onClick={handleSkipToComplete}
-                  disabled={submitting}
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
-                >
-                  Skip - Complete Later
-                </button>
+
               </div>
             </form>
           </div>
 
           {/* Navigation */}
           <div className="text-center">
-            <Link
-              href="/onboarding/step-2"
+            <button
+              type="button"
+              onClick={handleBackToStep2}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Back to Step 2
-            </Link>
+            </button>
           </div>
         </div>
       </main>
