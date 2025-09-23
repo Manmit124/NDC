@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { Profile } from '@/types/database'
+import { getURL } from '@/utils/getURL'
 
 interface AuthData {
   user: User | null
@@ -47,7 +48,10 @@ async function loginUser(email: string, password: string) {
 async function signupUser(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
-    password
+    password,
+    options: {
+      emailRedirectTo: getURL()
+    }
   })
   
   if (error) throw error
