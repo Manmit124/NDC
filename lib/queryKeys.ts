@@ -13,4 +13,12 @@ export const queryKeys = {
   dashboard: {
     stats: ['dashboard', 'stats'] as const,
   },
+  
+  // QA related queries
+  qa: {
+    questions: (filters?: { tag?: string; solved?: boolean; category?: string }) => ['qa', 'questions', filters] as const,
+    question: (id: string) => ['qa', 'question', id] as const,
+    replies: (questionId: string) => ['qa', 'replies', questionId] as const,
+    questionWithReplies: (id: string) => ['qa', 'question-with-replies', id] as const,
+  },
 } as const

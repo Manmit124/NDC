@@ -7,6 +7,11 @@ export interface Database {
         Insert: ProfileInsert
         Update: ProfileUpdate
       }
+      qa_messages: {
+        Row: QAMessage
+        Insert: QAMessageInsert
+        Update: QAMessageUpdate
+      }
     }
   }
 }
@@ -32,5 +37,35 @@ export interface ProfileInsert extends Omit<Profile, 'updated_at' | 'created_at'
 }
 
 export interface ProfileUpdate extends Partial<Omit<Profile, 'id'>> {
+  updated_at?: string
+}
+
+// QA Message types - based on your qa_messages table structure
+export interface QAMessage {
+  id: string
+  content: string
+  author_id: string
+  parent_id: string | null  // NULL for questions, question_id for replies
+  is_question: boolean
+  question_title: string | null  // only for questions
+  tags: string[] | null  // for question categorization
+  is_solved: boolean
+  reply_count: number
+  last_reply_at: string | null
+  views_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface QAMessageInsert extends Omit<QAMessage, 'id' | 'created_at' | 'updated_at' | 'reply_count' | 'views_count' | 'last_reply_at'> {
+  id?: string
+  reply_count?: number
+  views_count?: number
+  last_reply_at?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface QAMessageUpdate extends Partial<Omit<QAMessage, 'id' | 'created_at'>> {
   updated_at?: string
 }

@@ -589,3 +589,157 @@ Need TypeScript types?
 - **Responsive design**: Maintains beauty across different screen sizes
 
 The profile page now has a **premium, modern look** that's visually engaging and provides an excellent user experience. It uses contemporary design trends like glassmorphism, gradient effects, and smooth animations while maintaining excellent usability and accessibility.
+
+
+
+Perfect! Now that you've added the schema to the database, here's the **step-by-step implementation plan** following your development guide patterns:
+
+[1 tool called]
+
+## 🎯 **QA IMPLEMENTATION PLAN - Step by Step**
+
+### **🏗️ PHASE 1: Foundation (Database & Types)**
+
+#### **Step 1: Database Types**
+- Add `QAMessage`, `QAMessageInsert`, `QAMessageUpdate` interfaces to `types/database.ts`
+- Update main `Database` interface to include `qa_messages` table
+- Follow your existing pattern (like Profile types)
+
+#### **Step 2: Query Keys**
+- Add QA query keys to `lib/queryKeys.ts`
+- Include keys for: questions list, single question, replies
+- Follow your existing pattern with nested objects
+
+---
+
+### **🎣 PHASE 2: Data Layer (React Query Hooks)**
+
+#### **Step 3: API Hooks**
+- Create `hooks/api/useQA.ts` following your development guide pattern
+- Include functions:
+  - `fetchQuestions()` - get all questions with filters
+  - `fetchQuestionWithReplies()` - get question + all replies
+  - `createQuestion()` - ask new question
+  - `createReply()` - add reply to question
+  - `markAsSolved()` - mark question solved
+  - `updateViewCount()` - track question views
+
+#### **Step 4: UI State Management**
+- Add QA-related UI state to `stores/ui.ts`
+- Include states for:
+  - Sidebar filters (solved/unsolved, tags)
+  - Ask question modal open/closed
+  - Selected question ID
+  - Search query
+  - Current category filter
+
+---
+
+### **🎨 PHASE 3: UI Components (Discord-like Interface)**
+
+#### **Step 5: Main Layout**
+- Create Discord-style 3-panel layout component
+- Left sidebar: Categories/filters (like Discord channels)
+- Center: Questions list (like Discord messages)
+- Right: Question detail (like Discord thread view)
+- Responsive design for mobile
+
+#### **Step 6: Questions List**
+- Build main questions list page (`app/qa/page.tsx`)
+- Discord-style question cards with:
+  - User avatar + username + timestamp
+  - Question title and preview
+  - Tags as Discord-style badges
+  - Reply count, views, solved status
+  - Last activity indicator
+
+#### **Step 7: Question Detail**
+- Create question detail page (`app/qa/[id]/page.tsx`)
+- Discord thread-style layout:
+  - Original question as first message
+  - All replies as threaded messages
+  - Reply form at bottom
+  - Mark as solved button (for question author)
+
+---
+
+### **📝 PHASE 4: Forms & Interactions**
+
+#### **Step 8: Question & Reply Forms**
+- Ask question form (modal or separate page)
+- Reply form component (inline in question detail)
+- Rich text support for code blocks
+- Tags input component
+- Form validation and error handling
+
+---
+
+### **✨ PHASE 5: Polish & Features**
+
+#### **Step 9: Discord-like Styling**
+- Apply your theme colors and design system
+- Discord-style message bubbles
+- Hover effects and animations
+- Loading skeletons
+- Empty states
+- Error boundaries
+
+---
+
+### **🎯 PHASE 6: Advanced Features (Optional)**
+
+#### **Step 10: Enhanced Features**
+- Search functionality across questions/replies
+- Filter by tags, solved status, date
+- User reputation display
+- Question statistics
+- Mobile optimization
+
+---
+
+## 📁 **File Structure Plan**
+
+```
+types/database.ts          ← Add QA types
+lib/queryKeys.ts           ← Add QA query keys
+hooks/api/useQA.ts         ← Create QA hooks
+stores/ui.ts               ← Add QA UI state
+
+app/qa/
+├── page.tsx               ← Questions list (Discord-style)
+├── ask/page.tsx           ← Ask question form
+└── [id]/page.tsx          ← Question detail + replies
+
+components/QA/
+├── QALayout.tsx           ← 3-panel Discord layout
+├── QuestionsList.tsx      ← Questions feed
+├── QuestionCard.tsx       ← Single question preview
+├── QuestionDetail.tsx     ← Question + replies view
+├── ReplyCard.tsx          ← Single reply component
+├── AskQuestionForm.tsx    ← Ask question modal/form
+├── ReplyForm.tsx          ← Reply input form
+├── QASidebar.tsx          ← Categories/filters sidebar
+└── TagsInput.tsx          ← Tags management
+```
+
+---
+
+## ⏱️ **Estimated Timeline**
+
+- **Phase 1-2 (Foundation)**: 1-2 hours
+- **Phase 3 (UI Components)**: 3-4 hours  
+- **Phase 4 (Forms)**: 1-2 hours
+- **Phase 5 (Polish)**: 1-2 hours
+- **Total**: 6-10 hours
+
+---
+
+## 🎯 **Key Decisions Needed**
+
+1. **Layout**: Full Discord 3-panel or simplified 2-panel?
+2. **Ask Question**: Modal popup or separate page?
+3. **Categories**: Use tags dynamically or hardcode categories?
+4. **Styling**: Exact Discord colors or adapt to your theme?
+5. **Mobile**: How should the layout adapt on mobile?
+
+**Ready to start with Phase 1 (Database Types)? Let me know and I'll begin implementation!** 🚀
