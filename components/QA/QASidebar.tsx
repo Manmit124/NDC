@@ -23,7 +23,6 @@ export function QASidebar() {
     setQAFilters, 
     clearQAFilters,
     openAskQuestionModal,
-    qaSidebarOpen,
     setQASidebarOpen
   } = useUIStore()
   
@@ -62,7 +61,8 @@ export function QASidebar() {
   const handleTagClick = (tag: string) => {
     if (qaFilters.tag === tag) {
       // If same tag is clicked, remove filter
-      const { tag: _removedTag, ...rest } = qaFilters
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { tag: _, ...rest } = qaFilters
       setQAFilters(rest)
     } else {
       setQAFilters({ tag })

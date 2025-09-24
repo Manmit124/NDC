@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/auth/useAuth'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { User, Trash2, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
@@ -49,13 +50,15 @@ export function ReplyCard({ reply }: ReplyCardProps) {
         <div className="flex-shrink-0">
           {reply.profiles?.username ? (
             <div 
-              onClick={() => handleProfileClick(reply.profiles.username)}
+              onClick={() => handleProfileClick(reply.profiles!.username)}
               className="block hover:opacity-80 transition-opacity cursor-pointer"
             >
               {reply.profiles?.avatar_url ? (
-                <img
+                <Image
                   src={reply.profiles.avatar_url}
-                  alt={reply.profiles.full_name}
+                  alt={reply.profiles.full_name || 'User avatar'}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
@@ -76,7 +79,7 @@ export function ReplyCard({ reply }: ReplyCardProps) {
           <div className="flex items-center gap-2 mb-1">
             {reply.profiles?.username ? (
               <span 
-                onClick={() => handleProfileClick(reply.profiles.username)}
+                onClick={() => handleProfileClick(reply.profiles!.username)}
                 className="font-medium text-foreground text-sm hover:text-primary transition-colors cursor-pointer"
               >
                 {reply.profiles?.full_name || 'Anonymous'}
