@@ -22,14 +22,14 @@ export function QALayout({ children, sidebar, rightPanel }: QALayoutProps) {
       {/* Mobile sidebar overlay */}
       {qaSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={toggleQASidebar}
         />
       )}
 
       {/* Left Sidebar - Fixed position like ClientLayout */}
       <div className={cn(
-        "fixed inset-y-0 left-64 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/50 shadow-2xl transform transition-all duration-300 ease-in-out lg:relative lg:left-0 lg:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-card/80 backdrop-blur-xl border-r border-border/50 shadow-2xl transform transition-all duration-300 ease-in-out lg:relative lg:translate-x-0",
         qaSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="flex flex-col h-full">

@@ -19,7 +19,9 @@ export function QASidebar() {
     qaFilters, 
     setQAFilters, 
     clearQAFilters,
-    openAskQuestionModal 
+    openAskQuestionModal,
+    qaSidebarOpen,
+    setQASidebarOpen
   } = useUIStore()
   
   const { data: tags = [] } = useTags()
@@ -42,6 +44,10 @@ export function QASidebar() {
         setQAFilters({ solved: true })
         break
     }
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      setQASidebarOpen(false)
+    }
   }
 
   const handleTagClick = (tag: string) => {
@@ -52,6 +58,10 @@ export function QASidebar() {
     } else {
       setQAFilters({ tag })
     }
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      setQASidebarOpen(false)
+    }
   }
 
   return (
@@ -59,7 +69,13 @@ export function QASidebar() {
       {/* Ask Question Button */}
       <div className="p-4">
         <Button 
-          onClick={openAskQuestionModal}
+          onClick={() => {
+            openAskQuestionModal()
+            // Close sidebar on mobile when opening modal
+            if (window.innerWidth < 1024) {
+              setQASidebarOpen(false)
+            }
+          }}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <Plus className="h-4 w-4 mr-2" />
