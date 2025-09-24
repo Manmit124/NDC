@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useUIStore } from "@/stores/ui";
 import { createClient } from "@/utils/supabase/client";
 import { useDebounce } from 'use-debounce';
-import Link from "next/link";
 
 export default function Step1() {
   const [submitting, setSubmitting] = useState(false);
@@ -145,10 +144,18 @@ export default function Step1() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto"></div>
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-6 bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl p-8 shadow-xl">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/10 to-transparent animate-pulse"></div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              Loading your profile...
+            </p>
+            <p className="text-sm text-muted-foreground">Just a moment</p>
+          </div>
         </div>
       </div>
     );
@@ -159,71 +166,64 @@ export default function Step1() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-xl font-semibold text-foreground hover:text-muted-foreground transition-colors">
-                NDC - Nagpur Developer Club
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
-                {user.email}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="w-full max-w-md space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-6">
-            <div className="space-y-2">
-              <div className="text-4xl mb-4">🎉</div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                Welcome to NDC Community!
+            {/* Welcome Badge */}
+            <div className="inline-flex items-center space-x-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 text-sm font-medium text-primary backdrop-blur-sm">
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+              <span>🎉 Welcome to NDC</span>
+            </div>
+            
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold tracking-tight">
+                <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                  Join the
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  Community
+                </span>
               </h1>
-              <p className="text-muted-foreground">
-                Let&apos;s set up your developer profile to connect with Nagpur&apos;s tech community.
+              <p className="text-lg text-muted-foreground">
+                Let&apos;s set up your developer profile to connect with Nagpur&apos;s tech community
               </p>
             </div>
           </div>
 
           {/* Onboarding Form */}
-          <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl p-8 shadow-xl">
             {/* Progress Indicator */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                <span>Step 1 of 3 - Basic Information</span>
+            <div className="mb-8">
+              <div className="flex items-center justify-between text-sm font-medium text-muted-foreground mb-3">
+                <span>Step 1 of 3</span>
+                <span>Basic Information</span>
               </div>
               <div className="flex space-x-2">
-                <div className="h-2 w-full bg-primary rounded-full"></div>
-                <div className="h-2 w-full bg-muted rounded-full"></div>
-                <div className="h-2 w-full bg-muted rounded-full"></div>
+                <div className="h-3 w-full bg-gradient-to-r from-primary to-primary/80 rounded-full shadow-sm"></div>
+                <div className="h-3 w-full bg-muted/50 rounded-full"></div>
+                <div className="h-3 w-full bg-muted/50 rounded-full"></div>
               </div>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               {/* Username Field */}
-              <div className="space-y-2">
-                <label htmlFor="username" className="text-sm font-medium text-foreground">
-                  Choose Your Username *
+              <div className="space-y-3">
+                <label htmlFor="username" className="text-sm font-semibold text-foreground flex items-center space-x-2">
+                  <span>👤</span>
+                  <span>Choose Your Username *</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-muted-foreground">@</span>
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-muted-foreground font-medium">@</span>
                   </div>
                   <input
                     id="username"
                     name="username"
                     type="text"
                     required
-                    className="w-full pl-8 pr-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-3 h-12 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all duration-200"
                     placeholder="your_username"
                     value={username}
                     onChange={handleUsernameChange}
@@ -253,16 +253,17 @@ export default function Step1() {
               </div>
 
               {/* Full Name Field */}
-              <div className="space-y-2">
-                <label htmlFor="fullName" className="text-sm font-medium text-foreground">
-                  Full Name *
+              <div className="space-y-3">
+                <label htmlFor="fullName" className="text-sm font-semibold text-foreground flex items-center space-x-2">
+                  <span>✨</span>
+                  <span>Full Name *</span>
                 </label>
                 <input
                   id="fullName"
                   name="fullName"
                   type="text"
                   required
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                  className="w-full px-4 py-3 h-12 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all duration-200"
                   placeholder="Enter your full name"
                   value={fullName}
                   onChange={handleFullNameChange}
@@ -271,25 +272,31 @@ export default function Step1() {
 
               {/* Error Message */}
               {error && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                  <p className="text-destructive text-sm">{error}</p>
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-red-500">⚠️</span>
+                    <p className="text-red-500 text-sm font-medium">{error}</p>
+                  </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex flex-col space-y-3">
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={submitting || !username || !fullName || usernameAvailable !== true}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors"
+                  className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none flex items-center justify-center space-x-2"
                 >
                   {submitting ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
+                    <>
+                      <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
                       <span>Validating...</span>
-                    </div>
+                    </>
                   ) : (
-                    "Continue to Skills"
+                    <>
+                      <span>🚀</span>
+                      <span>Continue to Skills</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -297,13 +304,19 @@ export default function Step1() {
           </div>
 
           {/* Footer Note */}
-          <div className="text-center">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
+              <span>Step 1</span>
+              <span>•</span>
+              <span>Basic Info</span>
+              <span>•</span>
+              <span>Quick Setup</span>
+            </div>
             <p className="text-sm text-muted-foreground">
               You can always update your profile information later
             </p>
           </div>
         </div>
       </main>
-    </div>
   );
 }

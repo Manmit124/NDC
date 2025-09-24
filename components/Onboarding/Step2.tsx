@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useUIStore } from "@/stores/ui";
-import Link from "next/link";
 
 // Predefined skills categories
 const skillsCategories = {
@@ -137,26 +136,6 @@ export default function Step2() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-xl font-semibold text-foreground hover:text-muted-foreground transition-colors">
-                NDC - Nagpur Developer Club
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
-                {user.email}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Progress Section */}
@@ -170,7 +149,7 @@ export default function Step2() {
           </div>
 
           {/* Onboarding Form */}
-          <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-3xl p-8 shadow-xl">
             {/* Progress Indicator */}
             <div className="mb-6">
               <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
@@ -290,6 +269,5 @@ export default function Step2() {
           </div>
         </div>
       </main>
-    </div>
   );
 }

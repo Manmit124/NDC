@@ -26,8 +26,9 @@ export interface Profile {
   created_at: string
 }
 
-export interface ProfileInsert extends Omit<Profile, 'updated_at'> {
+export interface ProfileInsert extends Omit<Profile, 'updated_at' | 'created_at'> {
   updated_at?: string
+  created_at?: string
 }
 
 export interface ProfileUpdate extends Partial<Omit<Profile, 'id'>> {
