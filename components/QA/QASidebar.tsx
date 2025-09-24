@@ -5,16 +5,19 @@ import { useTags } from '@/hooks/api/useQA'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { 
-  Hash, 
-  MessageSquare, 
-  CheckCircle, 
+import { useRouter, usePathname } from 'next/navigation'
+import {
+  Hash,
+  MessageSquare,
+  CheckCircle,
   Clock, 
   Plus,
   Filter
 } from 'lucide-react'
 
 export function QASidebar() {
+  const router = useRouter()
+  const pathname = usePathname()
   const { 
     qaFilters, 
     setQAFilters, 
@@ -44,6 +47,12 @@ export function QASidebar() {
         setQAFilters({ solved: true })
         break
     }
+    
+    // Navigate to questions list if not already there
+    if (pathname !== '/qa') {
+      router.push('/qa')
+    }
+    
     // Close sidebar on mobile after selection
     if (window.innerWidth < 1024) {
       setQASidebarOpen(false)
@@ -58,6 +67,12 @@ export function QASidebar() {
     } else {
       setQAFilters({ tag })
     }
+    
+    // Navigate to questions list if not already there
+    if (pathname !== '/qa') {
+      router.push('/qa')
+    }
+    
     // Close sidebar on mobile after selection
     if (window.innerWidth < 1024) {
       setQASidebarOpen(false)
@@ -168,7 +183,13 @@ export function QASidebar() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearQAFilters}
+              onClick={() => {
+                clearQAFilters()
+                // Navigate to questions list if not already there
+                if (pathname !== '/qa') {
+                  router.push('/qa')
+                }
+              }}
               className="text-xs h-6 px-2"
             >
               Clear All
@@ -185,24 +206,34 @@ export function QASidebar() {
                 #{qaFilters.tag} ×
               </Badge>
             )}
-            {qaFilters.solved === true && (
-              <Badge 
-                variant="secondary" 
-                className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => setQAFilters({ solved: undefined })}
-              >
-                Solved ×
-              </Badge>
-            )}
-            {qaFilters.solved === false && (
-              <Badge 
-                variant="secondary" 
-                className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => setQAFilters({ solved: undefined })}
-              >
-                Unsolved ×
-              </Badge>
-            )}
+                {qaFilters.solved === true && (
+                  <Badge 
+                    variant="secondary" 
+                    className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => {
+                      setQAFilters({ solved: undefined })
+                      if (pathname !== '/qa') {
+                        router.push('/qa')
+                      }
+                    }}
+                  >
+                    Solved ×
+                  </Badge>
+                )}
+                {qaFilters.solved === false && (
+                  <Badge 
+                    variant="secondary" 
+                    className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => {
+                      setQAFilters({ solved: undefined })
+                      if (pathname !== '/qa') {
+                        router.push('/qa')
+                      }
+                    }}
+                  >
+                    Unsolved ×
+                  </Badge>
+                )}
           </div>
         </div>
       )}
