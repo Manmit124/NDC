@@ -19,6 +19,7 @@ import {
   Trash2
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
@@ -108,26 +109,29 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
     <>
       {/* Header - Fixed */}
       <div className="p-4 border-b border-border bg-card/50 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/qa">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Questions
-            </Button>
-          </Link>
-          
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold text-foreground line-clamp-1">
-              {question.question_title}
-            </h1>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <Link href="/qa">
+              <Button variant="ghost" size="sm" className="flex-shrink-0">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Back to Questions</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
+            </Link>
+            
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-foreground line-clamp-1">
+                {question.question_title}
+              </h1>
+            </div>
 
-          {question.is_solved && (
-            <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Solved
-            </Badge>
-          )}
+            {question.is_solved && (
+              <Badge variant="default" className="bg-green-500 hover:bg-green-600 flex-shrink-0">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Solved
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -140,9 +144,11 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
               {/* Avatar */}
               <div className="flex-shrink-0">
                 {question.profiles?.avatar_url ? (
-                  <img
+                  <Image
                     src={question.profiles.avatar_url}
-                    alt={question.profiles.full_name}
+                    alt={question.profiles.full_name || 'User avatar'}
+                    width={40}
+                    height={40}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (
@@ -172,12 +178,13 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
 
               {/* Author actions */}
               {isAuthor && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
                   <Button
                     variant={question.is_solved ? "outline" : "default"}
                     size="sm"
                     onClick={handleMarkSolved}
                     disabled={markSolved.isPending}
+                    className="flex-1 sm:flex-none whitespace-nowrap"
                   >
                     {markSolved.isPending ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -186,7 +193,12 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
                     ) : (
                       <CheckCircle className="h-4 w-4 mr-2" />
                     )}
-                    {question.is_solved ? 'Mark Unsolved' : 'Mark Solved'}
+                    <span className="hidden sm:inline">
+                      {question.is_solved ? 'Mark Unsolved' : 'Mark Solved'}
+                    </span>
+                    <span className="sm:hidden">
+                      {question.is_solved ? 'Unsolved' : 'Solved'}
+                    </span>
                   </Button>
                   
                   <Button
@@ -194,7 +206,7 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
                     size="sm"
                     onClick={handleDeleteQuestion}
                     disabled={deleteQuestion.isPending}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="flex-1 sm:flex-none text-destructive hover:text-destructive hover:bg-destructive/10 whitespace-nowrap"
                   >
                     {deleteQuestion.isPending ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
