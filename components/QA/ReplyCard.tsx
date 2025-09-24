@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/auth/useAuth'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { User, Trash2, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -14,6 +15,7 @@ interface ReplyCardProps {
 }
 
 export function ReplyCard({ reply }: ReplyCardProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const deleteReply = useDeleteReply()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -22,6 +24,10 @@ export function ReplyCard({ reply }: ReplyCardProps) {
 
   const handleDeleteReply = () => {
     setShowDeleteDialog(true)
+  }
+
+  const handleProfileClick = (username: string) => {
+    router.push(`/profile/${username}`)
   }
 
   const confirmDeleteReply = async () => {
@@ -41,12 +47,23 @@ export function ReplyCard({ reply }: ReplyCardProps) {
       <div className="flex items-start gap-3 mb-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          {reply.profiles?.avatar_url ? (
-            <img
-              src={reply.profiles.avatar_url}
-              alt={reply.profiles.full_name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
+          {reply.profiles?.username ? (
+            <div 
+              onClick={() => handleProfileClick(reply.profiles.username)}
+              className="block hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              {reply.profiles?.avatar_url ? (
+                <img
+                  src={reply.profiles.avatar_url}
+                  alt={reply.profiles.full_name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+              )}
+            </div>
           ) : (
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="h-4 w-4 text-primary" />
@@ -57,9 +74,18 @@ export function ReplyCard({ reply }: ReplyCardProps) {
         {/* Author info */}
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-foreground text-sm">
-              {reply.profiles?.full_name || 'Anonymous'}
-            </span>
+            {reply.profiles?.username ? (
+              <span 
+                onClick={() => handleProfileClick(reply.profiles.username)}
+                className="font-medium text-foreground text-sm hover:text-primary transition-colors cursor-pointer"
+              >
+                {reply.profiles?.full_name || 'Anonymous'}
+              </span>
+            ) : (
+              <span className="font-medium text-foreground text-sm">
+                Anonymous
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">
               @{reply.profiles?.username || 'unknown'}
             </span>

@@ -143,14 +143,25 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
           <div className="flex items-start gap-3 mb-4">
               {/* Avatar */}
               <div className="flex-shrink-0">
-                {question.profiles?.avatar_url ? (
-                  <Image
-                    src={question.profiles.avatar_url}
-                    alt={question.profiles.full_name || 'User avatar'}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                {question.profiles?.username ? (
+                  <Link 
+                    href={`/profile/${question.profiles.username}`}
+                    className="block hover:opacity-80 transition-opacity"
+                  >
+                    {question.profiles?.avatar_url ? (
+                      <Image
+                        src={question.profiles.avatar_url}
+                        alt={question.profiles.full_name || 'User avatar'}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
+                  </Link>
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-5 w-5 text-primary" />
@@ -161,9 +172,18 @@ export function QuestionDetail({ questionId }: QuestionDetailProps) {
               {/* Author info */}
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-foreground">
-                    {question.profiles?.full_name || 'Anonymous'}
-                  </span>
+                  {question.profiles?.username ? (
+                    <Link 
+                      href={`/profile/${question.profiles.username}`}
+                      className="font-semibold text-foreground hover:text-primary transition-colors"
+                    >
+                      {question.profiles?.full_name || 'Anonymous'}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-foreground">
+                      Anonymous
+                    </span>
+                  )}
                   <Badge variant="outline" className="text-xs">
                     OP
                   </Badge>

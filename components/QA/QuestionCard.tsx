@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -26,6 +27,7 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, onClick, className }: QuestionCardProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const deleteQuestion = useDeleteQuestion()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -39,6 +41,12 @@ export function QuestionCard({ question, onClick, className }: QuestionCardProps
     e.preventDefault() // Prevent navigation
     e.stopPropagation()
     setShowDeleteDialog(true)
+  }
+
+  const handleProfileClick = (e: React.MouseEvent, username: string) => {
+    e.preventDefault() // Prevent navigation
+    e.stopPropagation()
+    router.push(`/profile/${username}`)
   }
 
   const confirmDeleteQuestion = async () => {
@@ -61,12 +69,23 @@ export function QuestionCard({ question, onClick, className }: QuestionCardProps
       <div className="flex items-start gap-3 mb-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          {question.profiles?.avatar_url ? (
-            <img
-              src={question.profiles.avatar_url}
-              alt={question.profiles.full_name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
+          {question.profiles?.username ? (
+            <div 
+              onClick={(e) => handleProfileClick(e, question.profiles.username)}
+              className="block hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              {question.profiles?.avatar_url ? (
+                <img
+                  src={question.profiles.avatar_url}
+                  alt={question.profiles.full_name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+              )}
+            </div>
           ) : (
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="h-4 w-4 text-primary" />
@@ -77,9 +96,18 @@ export function QuestionCard({ question, onClick, className }: QuestionCardProps
         {/* Author and timestamp */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-foreground text-sm">
-              {question.profiles?.full_name || 'Anonymous'}
-            </span>
+            {question.profiles?.username ? (
+              <span 
+                onClick={(e) => handleProfileClick(e, question.profiles.username)}
+                className="font-medium text-foreground text-sm hover:text-primary transition-colors cursor-pointer"
+              >
+                {question.profiles?.full_name || 'Anonymous'}
+              </span>
+            ) : (
+              <span className="font-medium text-foreground text-sm">
+                Anonymous
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">
               @{question.profiles?.username || 'unknown'}
             </span>
