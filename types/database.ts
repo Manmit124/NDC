@@ -12,6 +12,11 @@ export interface Database {
         Insert: QAMessageInsert
         Update: QAMessageUpdate
       }
+      resources: {
+        Row: Resource
+        Insert: ResourceInsert
+        Update: ResourceUpdate
+      }
     }
   }
 }
@@ -69,3 +74,45 @@ export interface QAMessageInsert extends Omit<QAMessage, 'id' | 'created_at' | '
 export interface QAMessageUpdate extends Partial<Omit<QAMessage, 'id' | 'created_at'>> {
   updated_at?: string
 }
+
+// Resource types - for open source software and free resources
+export interface Resource {
+  id: string
+  title: string
+  url: string
+  description?: string
+  category: string
+  tags: string[]
+  submitted_by?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ResourceInsert extends Omit<Resource, 'id' | 'created_at' | 'updated_at'> {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ResourceUpdate extends Partial<Omit<Resource, 'id' | 'created_at'>> {
+  updated_at?: string
+}
+
+// Resource categories
+export const RESOURCE_CATEGORIES = [
+  'Frontend',
+  'Backend', 
+  'Database',
+  'DevOps',
+  'Mobile',
+  'Design',
+  'Testing',
+  'AI/ML',
+  'Blockchain',
+  'Security',
+  'Productivity',
+  'Learning',
+  'Other'
+] as const;
+
+export type ResourceCategory = typeof RESOURCE_CATEGORIES[number];

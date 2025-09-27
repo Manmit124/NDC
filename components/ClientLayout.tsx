@@ -26,6 +26,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                           pathname.startsWith('/search') || 
                           pathname.startsWith('/qa') || 
                           pathname.startsWith('/chat') || 
+                          pathname.startsWith('/resources') || 
                           pathname.startsWith('/profile/');
 
   // Navigation items
@@ -53,6 +54,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       href: "/qa",
       icon: "❓",
       current: pathname.startsWith("/qa")
+    },
+    {
+      name: "Resources",
+      href: "/resources",
+      icon: "🛠️",
+      current: pathname.startsWith("/resources")
     },
     {
       name: "Chat",

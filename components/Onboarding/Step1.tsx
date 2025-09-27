@@ -82,7 +82,7 @@ export default function Step1() {
 
     const timeoutId = setTimeout(checkUsernameAvailability, 500);
     return () => clearTimeout(timeoutId);
-  }, [value]);
+  }, [username, supabase]);
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
