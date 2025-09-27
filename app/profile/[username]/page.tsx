@@ -55,9 +55,15 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-6">
-      {/* Edit Button for Own Profile */}
+      {/* Action Buttons for Own Profile */}
       {isOwnProfile && (
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex justify-end gap-3">
+          <Link
+            href={`/profile/${username}/blogs`}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            📝 My Blogs
+          </Link>
           <button
             onClick={() => setEditing(!editing)}
             className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"

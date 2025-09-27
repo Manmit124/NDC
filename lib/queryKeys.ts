@@ -29,4 +29,19 @@ export const queryKeys = {
     room: (roomId: string) => ['chat', 'room', roomId] as const,
     anonymousUser: (sessionToken: string) => ['chat', 'anonymous', sessionToken] as const,
   },
+  
+  // Resources related queries
+  resources: {
+    list: (filters?: { category?: string; tag?: string }) => ['resources', 'list', filters] as const,
+    byId: (id: string) => ['resources', 'id', id] as const,
+  },
+  
+  // Blog related queries
+  blogs: {
+    published: (filters?: { tag?: string }) => ['blogs', 'published', filters] as const,
+    bySlug: (slug: string) => ['blogs', 'slug', slug] as const,
+    byAuthor: (authorId: string, includeUnpublished?: boolean) => ['blogs', 'author', authorId, includeUnpublished] as const,
+    byId: (id: string) => ['blogs', 'id', id] as const,
+    slugs: ['blogs', 'slugs'] as const,
+  },
 } as const

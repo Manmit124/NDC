@@ -32,6 +32,11 @@ export interface Database {
         Insert: AnonymousUserInsert
         Update: AnonymousUserUpdate
       }
+      blogs: {
+        Row: Blog
+        Insert: BlogInsert
+        Update: BlogUpdate
+      }
     }
   }
 }
@@ -210,4 +215,41 @@ export interface TypingIndicator {
   anonymous_user_id: string
   display_name: string
   timestamp: string
+}
+// Blog types - for developer blog posts
+export interface Blog {
+  id: string
+  title: string
+  slug: string
+  content: string
+  excerpt?: string
+  author_id: string
+  published: boolean
+  featured_image_url?: string
+  meta_title?: string
+  meta_description?: string
+  tags: string[]
+  read_time_minutes: number
+  published_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BlogInsert extends Omit<Blog, 'id' | 'created_at' | 'updated_at'> {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BlogUpdate extends Partial<Omit<Blog, 'id' | 'created_at'>> {
+  updated_at?: string
+}
+
+// Blog with author info (for listings)
+export interface BlogWithAuthor extends Blog {
+  author: {
+    username: string
+    full_name: string
+    avatar_url?: string
+  }
 }
