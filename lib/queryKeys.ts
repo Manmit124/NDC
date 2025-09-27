@@ -21,4 +21,12 @@ export const queryKeys = {
     replies: (questionId: string) => ['qa', 'replies', questionId] as const,
     questionWithReplies: (id: string) => ['qa', 'question-with-replies', id] as const,
   },
+
+  // Chat related queries
+  chat: {
+    rooms: ['chat', 'rooms'] as const,
+    messages: (roomId: string) => ['chat', 'messages', roomId] as const,
+    room: (roomId: string) => ['chat', 'room', roomId] as const,
+    anonymousUser: (sessionToken: string) => ['chat', 'anonymous', sessionToken] as const,
+  },
 } as const

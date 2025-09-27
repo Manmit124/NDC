@@ -17,6 +17,21 @@ export interface Database {
         Insert: ResourceInsert
         Update: ResourceUpdate
       }
+      chat_rooms: {
+        Row: ChatRoom
+        Insert: ChatRoomInsert
+        Update: ChatRoomUpdate
+      }
+      chat_messages: {
+        Row: ChatMessage
+        Insert: ChatMessageInsert
+        Update: ChatMessageUpdate
+      }
+      anonymous_users: {
+        Row: AnonymousUser
+        Insert: AnonymousUserInsert
+        Update: AnonymousUserUpdate
+      }
     }
   }
 }
@@ -61,12 +76,27 @@ export interface QAMessage {
   created_at: string
   updated_at: string
 }
+// Chat Room types
+export interface ChatRoom {
+  id: string
+  name: string
+  description?: string
+  is_anonymous: boolean
+  max_members?: number
+  created_by: string
+  created_at: string
+  updated_at: string
+}
 
 export interface QAMessageInsert extends Omit<QAMessage, 'id' | 'created_at' | 'updated_at' | 'reply_count' | 'views_count' | 'last_reply_at'> {
   id?: string
   reply_count?: number
   views_count?: number
   last_reply_at?: string | null
+}
+
+export interface ChatRoomInsert extends Omit<ChatRoom, 'id' | 'created_at' | 'updated_at'> {
+  id?: string
   created_at?: string
   updated_at?: string
 }
@@ -116,3 +146,68 @@ export const RESOURCE_CATEGORIES = [
 ] as const;
 
 export type ResourceCategory = typeof RESOURCE_CATEGORIES[number];
+export interface ChatRoomUpdate extends Partial<Omit<ChatRoom, 'id' | 'created_at'>> {
+  updated_at?: string
+}
+
+// Chat Message types
+export interface ChatMessage {
+  id: string
+  room_id: string
+  content: string
+  message_type: 'text' | 'image' | 'file' | 'code'
+  anonymous_user_id: string // all messages are linked to anonymous users
+  reply_to?: string // for threaded replies
+  edited_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMessageInsert extends Omit<ChatMessage, 'id' | 'created_at' | 'updated_at'> {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ChatMessageUpdate extends Partial<Omit<ChatMessage, 'id' | 'created_at'>> {
+  updated_at?: string
+}
+
+// Anonymous User types for pseudonymous chat
+export interface AnonymousUser {
+  id: string
+  user_id?: string // Links anonymous identity to actual user account
+  display_name: string
+  avatar_color: string
+  session_token: string
+  room_id: string
+  last_seen: string
+  created_at: string
+}
+
+export interface AnonymousUserInsert extends Omit<AnonymousUser, 'id' | 'created_at'> {
+  id?: string
+  created_at?: string
+}
+
+export interface AnonymousUserUpdate extends Partial<Omit<AnonymousUser, 'id' | 'created_at'>> {}
+
+// Enhanced message type with user information
+export interface ChatMessageWithUser extends ChatMessage {
+  anonymous_users?: Pick<AnonymousUser, 'id' | 'display_name' | 'avatar_color'>
+  user?: {
+    id: string
+    display_name: string
+    avatar_color?: string
+    avatar_url?: string
+    is_anonymous: boolean
+  }
+}
+
+// Typing indicator type for real-time features
+export interface TypingIndicator {
+  room_id: string
+  anonymous_user_id: string
+  display_name: string
+  timestamp: string
+}
