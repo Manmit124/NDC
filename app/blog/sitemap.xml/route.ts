@@ -10,7 +10,7 @@ export async function GET() {
     .eq('published', true)
     .order('published_at', { ascending: false })
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ndc-nagpur.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ndc-beta.vercel.app'
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
