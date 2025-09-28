@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NDC - Nagpur Developer Club",
     description: "Connect with Nagpur's software developer community. Find jobs, get help, and grow your career.",
-    url: "https://ndc-nagpur.com",
+    url: "https://ndc-beta.vercel.app/",
     siteName: "Nagpur Developer Club",
     locale: "en_IN",
     type: "website",
@@ -64,8 +64,8 @@ export default function RootLayout({
     "@type": "Organization",
     "name": "Nagpur Developer Club",
     "alternateName": "NDC",
-    "url": "https://ndc-nagpur.com",
-    "logo": "https://ndc-nagpur.com/logo.png",
+    "url": "https://ndc-beta.vercel.app/",
+    "logo": "https://ndc-beta.vercel.app/logo.png",
     "description": "Nagpur's premier developer community connecting local software developers through profiles, job board, and Q&A platform.",
     "address": {
       "@type": "PostalAddress",
