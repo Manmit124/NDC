@@ -4,7 +4,7 @@ import { Hash, Plus, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useUIStore } from '@/stores/ui'
-import { useChatRooms, useCreateRoom } from '@/hooks/api/useChat'
+import { useChatRooms, useCreateRoom, useUserProfile } from '@/hooks/api/useChat'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { useState } from 'react'
 import {
@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { ProfileRequiredPrompt } from './ProfileRequiredPrompt'
 
 export function ChatRoomList() {
   const { 
@@ -27,8 +28,10 @@ export function ChatRoomList() {
   
   const { data: rooms, isLoading, error } = useChatRooms()
   const { user } = useAuth()
+  const { data: userProfile } = useUserProfile(user?.id)
   
   const [showCreateRoom, setShowCreateRoom] = useState(false)
+  const [showProfileRequired, setShowProfileRequired] = useState(false)
   const [roomName, setRoomName] = useState('')
   const [roomDescription, setRoomDescription] = useState('')
   const [isAnonymousRoom, setIsAnonymousRoom] = useState(true)
@@ -37,6 +40,12 @@ export function ChatRoomList() {
 
   const handleCreateRoom = async () => {
     if (!roomName.trim() || !user) return
+    
+    // Check if user is trying to create identity room without profile
+    if (!isAnonymousRoom && !userProfile?.hasProfile) {
+      setShowProfileRequired(true)
+      return
+    }
     
     try {
       await createRoom.mutateAsync({
@@ -54,6 +63,15 @@ export function ChatRoomList() {
     } catch (error) {
       console.error('Failed to create room:', error)
     }
+  }
+
+  const handleRoomTypeChange = (anonymous: boolean) => {
+    // If user is trying to select identity room but doesn't have profile
+    if (!anonymous && user && !userProfile?.hasProfile) {
+      setShowProfileRequired(true)
+      return
+    }
+    setIsAnonymousRoom(anonymous)
   }
 
   // Check if this is a database table error
@@ -164,17 +182,47 @@ export function ChatRoomList() {
                     rows={3}
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="anonymous-room"
-                    checked={isAnonymousRoom}
-                    onChange={(e) => setIsAnonymousRoom(e.target.checked)}
-                    className="rounded"
-                  />
-                  <Label htmlFor="anonymous-room" className="text-sm">
-                    Anonymous room (members can chat anonymously)
-                  </Label>
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Room Type</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        id="anonymous-room"
+                        name="room-type"
+                        checked={isAnonymousRoom}
+                        onChange={() => setIsAnonymousRoom(true)}
+                        className="rounded"
+                      />
+                      <Label htmlFor="anonymous-room" className="text-sm flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-orange-600" />
+                        Anonymous room (members chat with random names)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        id="identity-room"
+                        name="room-type"
+                        checked={!isAnonymousRoom}
+                        onChange={() => handleRoomTypeChange(false)}
+                        className="rounded"
+                        disabled={!userProfile?.hasProfile}
+                      />
+                      <Label htmlFor="identity-room" className={`text-sm flex items-center gap-2 ${!userProfile?.hasProfile ? 'text-muted-foreground' : ''}`}>
+                        <Hash className="w-4 h-4 text-blue-600" />
+                        Identity room (members chat with real names)
+                        {!userProfile?.hasProfile && (
+                          <Badge variant="secondary" className="ml-2 text-xs">Profile Required</Badge>
+                        )}
+                      </Label>
+                    </div>
+                  </div>
+                  {!userProfile?.hasProfile && (
+                    <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                      Complete your profile to create identity rooms where members chat with their real names.
+                    </p>
+                  )}
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button 
@@ -271,6 +319,13 @@ export function ChatRoomList() {
           {rooms?.length || 0} room{rooms?.length !== 1 ? 's' : ''}
         </div>
       </div>
+
+      {/* Profile Required Dialog */}
+      <Dialog open={showProfileRequired} onOpenChange={setShowProfileRequired}>
+        <DialogContent className="sm:max-w-md">
+          <ProfileRequiredPrompt isCreatingRoom={true} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
