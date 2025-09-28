@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, X, Reply, Code, Image, Paperclip } from 'lucide-react'
+import { Send, X, Reply, Code, Image, Paperclip, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useUIStore } from '@/stores/ui'
-import { useSendMessage, useAnonymousUser } from '@/hooks/api/useChat'
+import { useSendMessage, useAnonymousUser, useRoom, useUserProfile } from '@/hooks/api/useChat'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { ProfileRequiredPrompt } from './ProfileRequiredPrompt'
 
 interface MessageInputProps {
   roomId: string
@@ -16,7 +18,6 @@ interface MessageInputProps {
 export function MessageInput({ roomId }: MessageInputProps) {
   const { 
     chat: { 
-      isAnonymousMode, 
       sessionToken, 
       messageInput, 
       replyingTo 
@@ -26,10 +27,13 @@ export function MessageInput({ roomId }: MessageInputProps) {
   } = useUIStore()
   
   const { user } = useAuth()
+  const { data: room } = useRoom(roomId)
+  const { data: userProfile } = useUserProfile(user?.id)
   const sendMessage = useSendMessage()
   const { data: anonymousUser } = useAnonymousUser(roomId, sessionToken, user?.id)
   
   const [messageType, setMessageType] = useState<'text' | 'code'>('text')
+  const [showProfileRequired, setShowProfileRequired] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-resize textarea
@@ -53,6 +57,14 @@ export function MessageInput({ roomId }: MessageInputProps) {
     
     const content = messageInput?.trim()
     if (!content || sendMessage.isPending || !anonymousUser?.id) return
+
+    // Only check profile requirement for identity rooms (non-anonymous rooms)
+    // Anonymous rooms should allow all users to chat regardless of profile status
+    if (!room?.is_anonymous && user && !userProfile?.hasProfile) {
+      // Don't send message if profile is required but not complete for identity room
+      // This should not happen as UI prevents typing, but safety check
+      return
+    }
 
     try {
       await sendMessage.mutateAsync({
@@ -84,24 +96,36 @@ export function MessageInput({ roomId }: MessageInputProps) {
   }
 
   const getUserDisplayInfo = () => {
-    if (isAnonymousMode && anonymousUser) {
+    // If room forces anonymity, use anonymous user
+    if (room?.is_anonymous && anonymousUser) {
       return {
         name: anonymousUser.display_name,
         color: anonymousUser.avatar_color
       }
-    } else if (user) {
-      return {
-        name: user.email || 'You',
-        color: '#3B82F6' // Default blue
+    } 
+    // If room allows identity and user is logged in, check profile
+    else if (!room?.is_anonymous && user) {
+      if (userProfile?.hasProfile && userProfile.username) {
+        return {
+          name: userProfile.username,
+          color: '#3B82F6' // Default blue
+        }
+      } else {
+        return {
+          name: 'Profile Required',
+          color: '#EF4444' // Red to indicate action needed
+        }
       }
     }
+    // Fallback to anonymous (for loading states or edge cases)
     return {
-      name: 'Anonymous',
-      color: '#6B7280' // Gray
+      name: anonymousUser?.display_name || 'Anonymous',
+      color: anonymousUser?.avatar_color || '#6B7280' // Gray
     }
   }
 
   const displayInfo = getUserDisplayInfo()
+  const needsProfile = !room?.is_anonymous && user && !userProfile?.hasProfile
 
   return (
     <div className="border-t border-border bg-card">
@@ -161,23 +185,28 @@ export function MessageInput({ roomId }: MessageInputProps) {
 
       {/* Input form */}
       <form onSubmit={handleSubmit} className="p-4">
+        
         <div className="flex gap-2">
           <div className="flex-1">
             <Textarea
               ref={textareaRef}
-              placeholder={`Type your ${messageType} message... (Enter to send, Shift+Enter for new line)`}
+              placeholder={
+                needsProfile 
+                  ? "Complete your profile to send messages in this identity room..."
+                  : `Type your ${messageType} message... (Enter to send, Shift+Enter for new line)`
+              }
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={handleKeyPress}
               className={`min-h-[40px] max-h-[120px] resize-none ${
                 messageType === 'code' ? 'font-mono text-sm' : ''
               }`}
-              disabled={sendMessage.isPending}
+              disabled={sendMessage.isPending || !!needsProfile}
             />
           </div>
           <Button
             type="submit"
-            disabled={!messageInput?.trim() || sendMessage.isPending || !anonymousUser?.id}
+            disabled={!messageInput?.trim() || sendMessage.isPending || !anonymousUser?.id || !!needsProfile}
             className="self-end"
           >
             {sendMessage.isPending ? (
@@ -198,6 +227,13 @@ export function MessageInput({ roomId }: MessageInputProps) {
           </div>
         )}
       </form>
+
+      {/* Profile Required Dialog */}
+      <Dialog open={showProfileRequired} onOpenChange={setShowProfileRequired}>
+        <DialogContent className="sm:max-w-md">
+          <ProfileRequiredPrompt roomName={room?.name} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

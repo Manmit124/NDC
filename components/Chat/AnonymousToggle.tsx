@@ -5,14 +5,29 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useUIStore } from '@/stores/ui'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { useRoom } from '@/hooks/api/useChat'
 
-export function AnonymousToggle() {
-  const { 
-    chat: { isAnonymousMode },
-    toggleAnonymousMode,
-    setAnonymousMode
-  } = useUIStore()
+interface AnonymousToggleProps {
+  roomId: string
+}
+
+export function AnonymousToggle({ roomId }: AnonymousToggleProps) {
   const { user } = useAuth()
+  const { data: room } = useRoom(roomId)
+
+  // If room data isn't loaded yet, show loading state
+  if (!room) {
+    return (
+      <div className="flex items-center gap-3 p-4 bg-card border-b border-border">
+        <div className="flex-1">
+          <div className="h-4 bg-muted animate-pulse rounded mb-1"></div>
+          <div className="h-3 bg-muted animate-pulse rounded w-2/3"></div>
+        </div>
+      </div>
+    )
+  }
+
+  const isAnonymousRoom = room.is_anonymous
 
   return (
     <div className="flex items-center gap-3 p-4 bg-card border-b border-border">
@@ -21,54 +36,38 @@ export function AnonymousToggle() {
           Chat Mode
         </h3>
         <p className="text-xs text-muted-foreground">
-          {isAnonymousMode 
-            ? "You're chatting anonymously with a random name" 
+          {isAnonymousRoom 
+            ? "This room enforces anonymous chat - all users are assigned random anonymous names for privacy" 
             : user 
-              ? "You're chatting as yourself" 
-              : "Sign in or continue anonymously"
+              ? "This room allows identified chat - you're chatting with your real username" 
+              : "This room allows identified chat - sign in to chat with your identity"
           }
         </p>
       </div>
       
       <div className="flex items-center gap-2">
-        {/* Current mode badge */}
+        {/* Room mode badge (not toggleable) */}
         <Badge 
-          variant={isAnonymousMode ? "secondary" : "default"}
+          variant={isAnonymousRoom ? "secondary" : "default"}
           className={`transition-colors ${
-            isAnonymousMode 
+            isAnonymousRoom 
               ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200" 
               : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
           }`}
         >
-          {isAnonymousMode ? (
+          {isAnonymousRoom ? (
             <>
               <Shield className="w-3 h-3 mr-1" />
-              Anonymous
+              Anonymous Room
             </>
           ) : (
             <>
               <User className="w-3 h-3 mr-1" />
-              {user ? 'Identified' : 'Guest'}
+              Identity Room
             </>
           )}
         </Badge>
         
-        {/* Toggle button - only show if user is authenticated */}
-        {user && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleAnonymousMode}
-            className="h-8 w-8 p-0"
-            title={isAnonymousMode ? "Switch to identified mode" : "Switch to anonymous mode"}
-          >
-            {isAnonymousMode ? (
-              <Eye className="w-4 h-4" />
-            ) : (
-              <EyeOff className="w-4 h-4" />
-            )}
-          </Button>
-        )}
       </div>
     </div>
   )

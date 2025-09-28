@@ -6,9 +6,11 @@ import { AnonymousToggle } from '@/components/Chat/AnonymousToggle'
 import { ChatRoomList } from '@/components/Chat/ChatRoomList'
 import { MessageList } from '@/components/Chat/MessageList'
 import { MessageInput } from '@/components/Chat/MessageInput'
+import { ProfileRequiredPrompt } from '@/components/Chat/ProfileRequiredPrompt'
 import { useUIStore } from '@/stores/ui'
-import { useRoom } from '@/hooks/api/useChat'
+import { useRoom, useUserProfile } from '@/hooks/api/useChat'
 import { useRealtimeChat } from '@/hooks/useRealtimeChat'
+import { useAuth } from '@/hooks/auth/useAuth'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -23,8 +25,13 @@ export default function ChatPage() {
     toggleRoomList
   } = useUIStore()
   
+  const { user } = useAuth()
   const { data: activeRoom } = useRoom(activeRoomId || '')
+  const { data: userProfile } = useUserProfile(user?.id)
   const { sendTypingIndicator } = useRealtimeChat(activeRoomId || '')
+
+  // Check if user needs profile for identity room
+  const needsProfileForRoom = activeRoom && !activeRoom.is_anonymous && user && !userProfile?.hasProfile
 
   // Auto-hide room list on mobile when room is selected
   useEffect(() => {
@@ -34,7 +41,7 @@ export default function ChatPage() {
   }, [activeRoomId, setRoomListVisible])
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background">
+    <div className="flex h-[calc(100vh)] bg-background">
       {/* Room List Sidebar */}
       {showRoomList && <ChatRoomList />}
       
@@ -61,14 +68,6 @@ export default function ChatPage() {
                       <h1 className="text-xl font-semibold text-foreground">
                         {activeRoom?.name || 'Loading...'}
                       </h1>
-                      {activeRoom?.is_anonymous && (
-                        <Badge 
-                          variant="secondary" 
-                          className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-                        >
-                          Anonymous Room
-                        </Badge>
-                      )}
                     </div>
                     {activeRoom?.description && (
                       <p className="text-sm text-muted-foreground mt-1">
@@ -93,13 +92,20 @@ export default function ChatPage() {
             </div>
 
             {/* Anonymous Toggle */}
-            <AnonymousToggle />
+            <AnonymousToggle roomId={activeRoomId} />
 
-            {/* Messages Area */}
-            <MessageList roomId={activeRoomId} />
+            {/* Show profile required prompt for identity rooms without profile */}
+            {needsProfileForRoom ? (
+              <ProfileRequiredPrompt roomName={activeRoom?.name} />
+            ) : (
+              <>
+                {/* Messages Area */}
+                <MessageList roomId={activeRoomId} />
 
-            {/* Message Input */}
-            <MessageInput roomId={activeRoomId} />
+                {/* Message Input */}
+                <MessageInput roomId={activeRoomId} />
+              </>
+            )}
           </>
         ) : (
           /* Welcome/Empty State */

@@ -207,6 +207,20 @@ export interface ChatMessageWithUser extends ChatMessage {
     avatar_url?: string
     is_anonymous: boolean
   }
+  replied_message?: {
+    id: string
+    content: string
+    message_type: 'text' | 'image' | 'file' | 'code'
+    created_at: string
+    anonymous_users?: Pick<AnonymousUser, 'id' | 'display_name' | 'avatar_color'>
+    user?: {
+      id: string
+      display_name: string
+      avatar_color?: string
+      avatar_url?: string
+      is_anonymous: boolean
+    }
+  }
 }
 
 // Typing indicator type for real-time features

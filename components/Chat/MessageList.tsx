@@ -9,6 +9,7 @@ import { useMessages, useDeleteMessage, useEditMessage, useAnonymousUser } from 
 import { useAuth } from '@/hooks/auth/useAuth'
 import { ChatMessageWithUser, AnonymousUser } from '@/types/database'
 import { formatDistance } from 'date-fns'
+import { cn } from "@/lib/utils"; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,60 @@ interface MessageItemProps {
   message: ChatMessageWithUser
   onReply: (messageId: string) => void
   currentAnonymousUser?: AnonymousUser
+}
+
+interface ReplyPreviewProps {
+  repliedMessage: NonNullable<ChatMessageWithUser['replied_message']>
+  isOwnMessage: boolean
+}
+
+function ReplyPreview({ repliedMessage, isOwnMessage }: ReplyPreviewProps) {
+  const getSenderInfo = () => {
+    if (repliedMessage.user) {
+      return {
+        name: repliedMessage.user.display_name,
+        color: repliedMessage.user.avatar_color || '#3B82F6'
+      }
+    }
+    return {
+      name: 'Unknown User',
+      color: '#6B7280'
+    }
+  }
+
+  const senderInfo = getSenderInfo()
+
+  // Truncate long messages for preview
+  const truncateMessage = (content: string, maxLength: number = 100) => {
+    if (content.length <= maxLength) return content
+    return content.substring(0, maxLength) + '...'
+  }
+
+  return (
+    <div className={cn(
+      `mb-2 p-2 rounded-md border-l-4 text-xs bg-background/20 border-${senderInfo.color}`,
+
+    )}>
+      <div className={cn(
+        "flex items-center gap-1 mb-1",
+      )}>
+        <span className="font-medium" style={{ color: senderInfo.color }}>
+          {senderInfo.name}
+        </span>
+      </div>
+      <div className={cn(
+        "opacity-80",
+      )}>
+        {repliedMessage.message_type === 'code' ? (
+          <code className="bg-background/20 px-1 rounded text-xs">
+            {truncateMessage(repliedMessage.content, 80)}
+          </code>
+        ) : (
+          truncateMessage(repliedMessage.content)
+        )}
+      </div>
+    </div>
+  )
 }
 
 function MessageItem({ message, onReply, currentAnonymousUser }: MessageItemProps) {
@@ -99,57 +154,70 @@ function MessageItem({ message, onReply, currentAnonymousUser }: MessageItemProp
   }
 
   return (
-    <div className={`group flex gap-3 p-4 hover:bg-muted/30 ${isOwnMessage ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''}`}>
-      {/* Avatar */}
-      <div className="flex-shrink-0">
-        {senderInfo.avatar ? (
-          <img
-            src={senderInfo.avatar}
-            alt={senderInfo.name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <div 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm"
-            style={{ backgroundColor: senderInfo.color }}
-          >
-            {senderInfo.name.charAt(0).toUpperCase()}
-          </div>
+  <div
+    className={cn(
+      "group flex gap-3 p-4 hover:bg-muted/30",
+      // For own messages, this single class reverses the order of all direct children
+      isOwnMessage && "flex-row-reverse" 
+    )}
+  >
+    {/* 1. Avatar */}
+    <div className="flex-shrink-0">
+      {senderInfo.avatar ? (
+        <img
+          src={senderInfo.avatar}
+          alt={senderInfo.name}
+          className="w-8 h-8 rounded-full object-cover"
+        />
+      ) : (
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-sm"
+          style={{ backgroundColor: senderInfo.color }}
+        >
+          {senderInfo.name.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </div>
+
+    {/* 2. Message Body (Always stays in the middle visually) */}
+    <div className="max-w-xs sm:max-w-md lg:max-w-lg">
+      {/* Header */}
+      <div className={cn(
+          "flex items-center gap-2 mb-1", 
+          isOwnMessage && "flex-row-reverse" // Reverses name/timestamp order
+      )}>
+        <span className="font-medium text-foreground text-sm">
+          {senderInfo.name}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {formatDistance(new Date(message.created_at), new Date(), { addSuffix: true })}
+        </span>
+        {message.edited_at && (
+          <Badge variant="outline" className="text-xs">Edited</Badge>
         )}
       </div>
 
-      {/* Message content */}
-      <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-foreground text-sm">
-            {senderInfo.name}
-          </span>
-          {message.anonymous_users && (
-            <Badge 
-              variant="secondary" 
-              className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 text-xs"
-            >
-              Anonymous
-            </Badge>
-          )}
-          <span className="text-xs text-muted-foreground">
-            {formatDistance(new Date(message.created_at), new Date(), { addSuffix: true })}
-          </span>
-          {message.edited_at && (
-            <Badge variant="outline" className="text-xs">
-              Edited
-            </Badge>
-          )}
-        </div>
+      {/* Message bubble */}
+      <div
+        className={cn(
+          "rounded-lg p-2 bg-muted rounded-bl-sm",
+        )}
+      >
+        {/* Reply Preview - show the original message being replied to */}
+        {message.replied_message && (
+          <ReplyPreview 
+            repliedMessage={message.replied_message} 
+            isOwnMessage={isOwnMessage}
+          />
+        )}
 
-        {/* Message content */}
+        {/* Editing state or message content */}
         {isEditing ? (
           <div className="space-y-2">
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full p-2 border rounded-lg resize-none min-h-[60px] bg-background"
+              className="w-full p-2 border rounded-lg resize-none min-h-[60px] bg-background text-foreground"
               autoFocus
             />
             <div className="flex gap-2">
@@ -164,79 +232,71 @@ function MessageItem({ message, onReply, currentAnonymousUser }: MessageItemProp
         ) : (
           <div className={`text-sm ${message.message_type === 'code' ? 'font-mono' : ''}`}>
             {message.message_type === 'code' ? (
-              <pre className="bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words">
+              <pre
+                className={cn(
+                  "p-2 rounded overflow-x-auto whitespace-pre-wrap break-words",
+                  isOwnMessage ? "bg-background/10" : "bg-background"
+                )}
+              >
                 {message.content}
               </pre>
             ) : (
-              <div className="whitespace-pre-wrap break-words">
-                {message.content}
-              </div>
+              <div className="whitespace-pre-wrap break-words">{message.content}</div>
             )}
           </div>
         )}
-
-        {/* Reply indicator if this is a reply */}
-        {message.reply_to && (
-          <div className="mt-2 text-xs text-muted-foreground">
-            <Reply className="w-3 h-3 inline mr-1" />
-            Reply to message
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex items-center gap-1">
-          {/* Reply button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onReply(message.id)}
-            className="h-7 w-7 p-0"
-            title="Reply"
-          >
-            <Reply className="w-3 h-3" />
-          </Button>
-
-          {/* More options */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0"
-                title="More options"
-              >
-                <MoreVertical className="w-3 h-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleCopyMessage}>
-                <Copy className="w-4 h-4 mr-2" />
-                Copy Message
-              </DropdownMenuItem>
-              
-              {isOwnMessage && (
-                <>
-                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Message
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleDeleteMessage}
-                    className="text-red-600 dark:text-red-400"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Message
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
     </div>
-  )
+
+    {/* 3. Actions (Reply, More Options) */}
+    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onReply(message.id)}
+          className="h-7 w-7 p-0"
+          title="Reply"
+        >
+          <Reply className="w-3 h-3" />
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="More options">
+              <MoreVertical className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align={isOwnMessage ? "start" : "end"} 
+            className="w-48"
+          >
+            <DropdownMenuItem onClick={handleCopyMessage}>
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Message
+            </DropdownMenuItem>
+            
+            {isOwnMessage && (
+              <>
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Message
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleDeleteMessage}
+                  className="text-red-600 dark:text-red-400"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Message
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  </div>
+);
 }
 
 export function MessageList({ roomId }: MessageListProps) {
